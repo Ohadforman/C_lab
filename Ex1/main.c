@@ -4,15 +4,7 @@
 
 #define MAX_INPUT_LINE_LENGTH (100)
 
-void *malloc(size_t size);
-char *strtok(char *str, const char *delim);
-int atoi(const char *str);
-char* strcpy(char* destination, const char* source);
-int strcmp (const char* str1, const char* str2);
-int tolower(int argument);
-
 int execute_command(LinkedList *linked_list, char* command, int first_value, int seconde_value);
-
 
 int execute_command(LinkedList *linked_list, char* command, int first_value, int seconde_value){
     if ( strcmp(command, "exit") == 0 ){
