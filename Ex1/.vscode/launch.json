@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/ohadformanair/Documents/Programming_C/LAB_C/HW1/HW1/C_lab/Ex1",
+      "program": "/Users/ohadformanair/Documents/Programming_C/LAB_C/HW1/HW1/C_lab/Ex1/build/Debug/outDebug"
+    }
+  ]
+}

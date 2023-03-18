@@ -3,6 +3,7 @@
 
 #define TRUE    (1)
 #define FALSE   (0)
+#define INPUT_LINE_LENGTH 100
 
 void *malloc(size_t size);
 char *strtok(char *str, const char *delim);
@@ -43,8 +44,8 @@ int execute_command(LinkedList *linked_list, char* command, int first_value, int
 
 void main() {
     int exit = FALSE;
-    char line[100];
-    char command[100];
+    char line[INPUT_LINE_LENGTH];
+    char command[INPUT_LINE_LENGTH];
     int first_value = 0;
     int second_value = 0;
 
