@@ -17,8 +17,8 @@ PRINT
 AdD_After 5 3
 DeL 3
 PRINT
-INDEX 2
+INDEX 3
 PRINT
-Index 1
+Index 5
 PRINT
 Exit
