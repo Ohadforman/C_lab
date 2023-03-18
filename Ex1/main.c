@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "linked_list.h"
 
-#define TRUE    (1)
-#define FALSE   (0)
+#define MAX_INPUT_LINE_LENGTH (100)
 
 void *malloc(size_t size);
 char *strtok(char *str, const char *delim);
@@ -17,7 +17,7 @@ int execute_command(LinkedList *linked_list, char* command, int first_value, int
 int execute_command(LinkedList *linked_list, char* command, int first_value, int seconde_value){
     if ( strcmp(command, "exit") == 0 ){
         free_list(linked_list);
-        return TRUE; //Signal main to finish the run
+        return true; //Signal main to finish the run
     }  
     if ( strcmp(command, "add_end") == 0 ){
         add_to_end(linked_list, first_value);
@@ -38,13 +38,13 @@ int execute_command(LinkedList *linked_list, char* command, int first_value, int
         print_list(linked_list);
     }
     
-    return FALSE; //We got a regular command
+    return false; //We got a regular command
 }
 
-void main() {
-    int exit = FALSE;
-    char line[100];
-    char command[100];
+int main() {
+    int exit = false;
+    char line[MAX_INPUT_LINE_LENGTH];
+    char command[MAX_INPUT_LINE_LENGTH];
     int first_value = 0;
     int second_value = 0;
 
@@ -55,7 +55,7 @@ void main() {
 
     while (!exit){
         fgets(line, sizeof(line), stdin); //Wait for input line from the user
-        sscanf(line, "%s %d %d", &command, &first_value, &second_value); //Split the input line
+        sscanf(line, "%s %d %d", command, &first_value, &second_value); //Split the input line
         
         //Convert the command to lowercase
         for(int i = 0; command[i]; i++){

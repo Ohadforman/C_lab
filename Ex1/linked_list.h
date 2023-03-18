@@ -11,7 +11,7 @@ typedef struct LinkedList {
     struct Node *tail;
 } LinkedList;
 
-Node *create_node(int data);
+struct Node *create_node(int value);
 void add_to_end(LinkedList *list, int value);
 void add_to_start(LinkedList *list, int value);
 void add_after(LinkedList *list, int val_to_insert, int val_to_search);

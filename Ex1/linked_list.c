@@ -4,7 +4,7 @@
 
 void *malloc(size_t size);
 
-Node *create_node(int value) {
+struct Node *create_node(int value) {
     Node *new_node = malloc(sizeof(Node));
     new_node->data = value;
     new_node->next = NULL;
@@ -96,7 +96,7 @@ void delete_at_index(LinkedList *list, int index) {
         exit(1);
     }
 
-    if ( list->tail = current ){
+    if ( list->tail == current ){
         list->tail = prev;
     }
     prev->next = current->next;
