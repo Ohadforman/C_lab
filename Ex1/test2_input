@@ -1,6 +1,6 @@
-Add_StaRT 1
+Add_StaRT -1
 Print 
-Add_After 2 1
+Add_After 2 -1
 Print
 Del 0
 PRINt
@@ -15,10 +15,13 @@ PRINT
 ADD_END 4
 PRINT
 AdD_After 5 3
+PRINT
 DeL 3
 PRINT
 INDEX 3
 PRINT
 Index 5
 PRINT
+InDeX 90
+print
 Exit

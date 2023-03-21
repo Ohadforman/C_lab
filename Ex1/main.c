@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 #include "linked_list.h"
 
 #define MAX_INPUT_LINE_LENGTH (100)
