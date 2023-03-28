@@ -13,14 +13,12 @@ int my_grep(char *filename, char *expression) {
     char *line = NULL;
     size_t line_length = 0;
     int line_number = 1;
-    int expression_found = 0;
     while (getline(&line, &line_length, file) != -1) {
         if (line[strlen(line)-1] == '\n') {
             line[strlen(line)-1] = '\0';
         }
         if (check_expression(line, expression) == 1) {
             printf("%s\n", line);
-            expression_found = 1;
         }
         line_number++;
     }
