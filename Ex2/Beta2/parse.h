@@ -1,6 +1,8 @@
 #ifndef PARSE_H
 #define PARSE_H
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 // Struct to hold parsed command line arguments
 typedef struct {
     char* pattern;
