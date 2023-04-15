@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "parse.h"
 
-/* Parse the command line arguments */
 void parse_args(int argc, char* argv[], grep_args* args) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-b") == 0) {
@@ -33,100 +29,92 @@ void parse_args(int argc, char* argv[], grep_args* args) {
             exit(1);
         }
     }
-
     if (args->pattern == NULL) {
         fprintf(stderr, "Missing pattern argument\n");
+        exit(1);
+    }
+    if (args->file_name == NULL) {
+        fprintf(stderr, "Missing file argument\n");
         exit(1);
     }
 }
 
 
-/* Read the lines into an array */
-LineInfo* control_get_lines(grep_args* args) {
+
+LineInfo get_line_info(char* line, FILE* file) {
+    LineInfo info = { line, 1, ftell(file) };
+    char* buffer = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    // Read each line of the file until we reach the line we want
+    while ((read = getline(&buffer, &len, file)) != -1) {
+        if (buffer == line) {
+            break;
+        }
+        info.bytes_until_line += read;
+        info.line_num++;
+    }
+
+    free(buffer);
+    return info;
+}
+
+LineInfo* control_get_lines(const char* filename, const char* expression, const char* command) {
     FILE* fp;
     char* line = NULL;
     size_t len = 0;
-    size_t read;
-    size_t total_read;
-    int line_count = -1;
+    ssize_t read;
     LineInfo* results = NULL;
-    LineInfo info = { 0, 0, 0 };
     int result_count = 0;
-    int* search_result;
-    int match_flag1;
-    int match_flag2;
-    int match_flag3;
-    int found_match_in_line;
-    int line_equal_pattern;
-
-    // Input flags
-    int case_sensitive = !args->i_flag;
-    int only_row_num = args->c_flag;
-    int rows_not_contain_pattern = args->v_flag;
-    int rows_only_contain_pattern = args->x_flag;
-
-    // Either read input file or stdin
-    if ( args->file_name != NULL ) {
-        fp = fopen(args->file_name, "r");
-        if (fp == NULL) {
-            printf("Error opening file: %s\n", args->file_name);
-            return NULL;
-        }
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error opening file: %s\n", filename);
+        return NULL;
     }
-    else {
-        fp = stdin;
-    }
-    
-    // Search each line for the pattern
-    while ( (read = getline(&line, &len, fp)) != -1) {
-        info.line_ptr = line;
-        info.line_num = line_count;
-        info.bytes_until_line = total_read;
-        total_read += read;
-        line_count ++;
-
-        search_result = search_pattern(line, args->pattern, case_sensitive);
-        line_equal_pattern = search_result[0];
-        found_match_in_line = search_result[1];
-
-        // Check if we got relevant lines for our search type
-        match_flag1 = (rows_only_contain_pattern) && (line_equal_pattern);
-        match_flag2 = (!rows_not_contain_pattern) && (!rows_only_contain_pattern) && (found_match_in_line);
-        match_flag3 = (rows_not_contain_pattern) && (!found_match_in_line);
-        
-        if ( match_flag1 || match_flag2 || match_flag3 ) {
-            result_count++;
-            results = realloc(results, result_count * sizeof(LineInfo));
-            results[result_count - 1] = info;
+    int case_sensitive = (command[1] == 'c') ? 1 : 0; // check if case-sensitive flag is set
+    while ((read = getline(&line, &len, fp)) != -1) {
+        int* search_result = search_pattern(line, expression, case_sensitive);
+        if (command[0] == 'e') { // exact match
+            if (search_result[0]) {
+                result_count++;
+                results = realloc(results, result_count * sizeof(LineInfo));
+                results[result_count - 1] = get_line_info(line, fp);
+            }
+        } else if (command[0] == 'w') { // with expression
+            if (search_result[1]) {
+                result_count++;
+                results = realloc(results, result_count * sizeof(LineInfo));
+                results[result_count - 1] = get_line_info(line, fp);
+            }
+        } else if (command[0] == 'o') { // without expression
+            if (!search_result[1]) {
+                result_count++;
+                results = realloc(results, result_count * sizeof(LineInfo));
+                results[result_count - 1] = get_line_info(line, fp);
+            }
         }
         free(search_result);
     }
-
-    free(line); //TODO: Is needed?
-    
-    if ( fp != stdin ){
-        fclose(fp);
-    }
-    
+    free(line);
+    fclose(fp);
     return results;
 }
 
 
-/* Search for pattern/regex in the line */
 int* search_pattern(const char* line, const char* pattern, int case_sensitive) {
     int i, j = 0;
     int line_len = strlen(line);
     int pattern_len = strlen(pattern);
     int* result = (int*) calloc(2, sizeof(int));
-
     for (i = 0; i < line_len && j < pattern_len; i++) {
         char line_char = case_sensitive ? line[i] : tolower(line[i]);
         char pattern_char = case_sensitive ? pattern[j] : tolower(pattern[j]);
-        if ( (line_char == pattern_char) || (pattern_char == '.') ) {
+        if (line_char == pattern_char || pattern_char == '.') {
             j++;
             if (j == pattern_len) {
                 result[1] = 1;
-                if (i + 1 == line_len || line[i + 1] == ' ') { //TODO: doesn't seem correct
+                if (i + 1 == line_len || line[i + 1] == ' ') {
                     result[0] = 1;
                 }
             }
