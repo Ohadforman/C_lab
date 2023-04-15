@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     parse_args(argc, argv, &args);      
     
     // Get the lines array
-    LineInfo* lines = control_get_lines(args);
+    LineInfo* lines = control_get_lines(&args);
 
     // Iterate over the lines and print the line number and bytes until the next line
     int i = 0;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
         i++;
     }
     free(lines);
-    print_control(lines, print_command, byte_command);
+    //TODO: print_control(lines, print_command, byte_command);
     free(lines);
 
     fclose(fp);

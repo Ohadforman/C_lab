@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "parse.h"
 
 // Print a line from the file according to the specified print and line commands
 void print_line(char* line,int line_number,int bytes_number, char* print_command, char* byte_command);
