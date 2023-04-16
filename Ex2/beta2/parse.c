@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "parse.h"
 
 /* Parse the command line arguments */
@@ -50,7 +51,6 @@ LineInfo* control_get_lines(grep_args* args) {
     size_t total_read;
     int line_count = -1;
     LineInfo* results = NULL;
-    LineInfo info = { 0, 0, 0 };
     int result_count = 0;
     int* search_result;
     int match_flag1;
@@ -79,9 +79,7 @@ LineInfo* control_get_lines(grep_args* args) {
     
     // Search each line for the pattern
     while ( (read = getline(&line, &len, fp)) != -1) {
-        info.line_ptr = line;
-        info.line_num = line_count;
-        info.bytes_until_line = total_read;
+        LineInfo info = {line, line_count, total_read};
         total_read += read;
         line_count ++;
 

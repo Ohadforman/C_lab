@@ -34,7 +34,7 @@ void parse_args(int argc, char* argv[], grep_args* args);
 // line string is added to an array. The search command can be either "exact match", "with expression", or "without expression",
 // and can be case-sensitive or case-insensitive.
 
-LineInfo* control_get_lines(grep_args args);
+LineInfo* control_get_lines(grep_args* args);
 // This function searches for a pattern within a given string using a regular expression-like syntax
 // and returns an array of two integers: the first indicates if an exact match was found, and the second
 // indicates if the pattern was found at all. It uses a stack-based approach to handle grouping and alternation.

@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "print_control.h"
 #include "parse.h"
 
@@ -41,7 +44,7 @@ void print_num_lines(FILE* file, LineInfo info, int num_lines, char* print_comma
         // Read the next line
         char* next_line = NULL;
         size_t len = 0;
-        ssize_t read = getline(&next_line, &len, file);
+        size_t read = getline(&next_line, &len, file);
         if (read == -1) {
             // End of file
             break;
@@ -50,7 +53,7 @@ void print_num_lines(FILE* file, LineInfo info, int num_lines, char* print_comma
         // Free the previous line and update the current line pointer and line info
         free(line);
         line = next_line;
-        info = get_line_info(line, file);
+        //TODO: info = get_line_info(line, file);
 
         // Stop printing if we've printed the specified number of lines
         if (lines_printed == num_lines) {
