@@ -15,12 +15,25 @@ void free_args(grep_args* args) {
     free(args);
 }
 
+void initialize_grep_args(grep_args** args) {
+    (*args)->pattern = NULL;
+    (*args)->file_name = NULL;
+    (*args)->c_flag = 0;
+    (*args)->n_flag = 0;
+    (*args)->i_flag = 0;
+    (*args)->v_flag = 0;
+    (*args)->x_flag = 0;
+    (*args)->e_flag = 0;
+    (*args)->b_flag = 0;
+    (*args)->a_flag = 0;
+    (*args)->a_num = 0;
+}
+
 int main(int argc, char* argv[]) {
     int rows_to_print = 0;
     LineInfo** lines = malloc(sizeof(LineInfo*));
     grep_args* args = malloc(sizeof(grep_args));
-    args->pattern = NULL;
-    args->file_name = NULL;
+    initialize_grep_args(&args);
 
     // Fill the args structure with the input
     parse_args(argc, argv, args);      

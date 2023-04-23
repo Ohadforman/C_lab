@@ -119,7 +119,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         free(search_result);
     }
     
-    //free(line); //TODO: Is needed?
+    free(line); //TODO: Is needed?
     
     if ( fp != stdin ){
         fclose(fp);
