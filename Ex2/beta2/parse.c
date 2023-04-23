@@ -51,14 +51,13 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
     size_t len = 0;
     size_t read;
     size_t total_read = 0;
-    int line_count = 0;
+    int line_count = 1;
     int result_count = 0;
     int* search_result;
-    int match_flag1;
-    int match_flag2;
-    int match_flag3;
+    int match_flag, match_flag1, match_flag2, match_flag3;
     int found_match_in_line;
     int line_equal_pattern;
+    int num_rows_after = 0;
 
     // Input flags
     int case_sensitive = !args->i_flag;
@@ -90,18 +89,32 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         line_count ++;
 
         search_result = search_pattern(line, args->pattern, case_sensitive);
-        line_equal_pattern = search_result[0];
-        found_match_in_line = search_result[1];
+        found_match_in_line = search_result[0];
+        line_equal_pattern = search_result[1];
 
         // Check if we got relevant lines for our search type
         match_flag1 = (rows_only_contain_pattern) && (line_equal_pattern);
         match_flag2 = (!rows_not_contain_pattern) && (!rows_only_contain_pattern) && (found_match_in_line);
         match_flag3 = (rows_not_contain_pattern) && (!found_match_in_line);
-        
-        if ( match_flag1 || match_flag2 || match_flag3 ) {
+        match_flag = match_flag1 || match_flag2 || match_flag3;
+
+        if ( match_flag || (num_rows_after > 0) ) {
             result_count++;
+
+            if ( match_flag == 1 ) {
+                info->seperator = ':';
+                num_rows_after = args->a_num;
+            } else {
+                info->seperator = '-';
+                num_rows_after--;
+            }
+
             *results = realloc(*results, result_count * sizeof(LineInfo*));
             (*results)[result_count - 1] = info;
+        }
+        else {
+            free(info->line_ptr);
+            free(info);
         }
         free(search_result);
     }
@@ -121,11 +134,35 @@ int* search_pattern(const char* line, const char* pattern, int case_sensitive) {
     int i, j = 0;
     int line_len = strlen(line);
     int pattern_len = strlen(pattern);
-    int* result = (int*) calloc(2, sizeof(int));
+    int* result = malloc(2*sizeof(int));
+    result[0] = 0; 
+    result[1] = 0;
 
     for (i = 0; i < line_len && j < pattern_len; i++) {
         char line_char = case_sensitive ? line[i] : tolower(line[i]);
         char pattern_char = case_sensitive ? pattern[j] : tolower(pattern[j]);
+        
+        if ( line_char == pattern_char ){
+            j++;
+            if ( j == pattern_len ) { // We found a match
+                result[0] = 1;
+            }
+            // Check if line==pattern
+            if ( i == (line_len-1) ) { 
+                result[1] = 1;
+            } else if ( (line[i+1]=='\n') && (pattern_len==line_len-1) ) {
+                result[1] = 1;
+            }
+        }
+        else {
+            j = 0;
+        }
+    }
+
+    return result;
+}    
+
+/*       
         if ( (line_char == pattern_char) || (pattern_char == '.') ) {
             j++;
             if (j == pattern_len) {
@@ -154,5 +191,4 @@ int* search_pattern(const char* line, const char* pattern, int case_sensitive) {
     }
     return result;
 }
-
-
+*/

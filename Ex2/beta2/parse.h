@@ -24,6 +24,7 @@ typedef struct LineInfo {
     char* line_ptr;
     int line_num;
     int bytes_until_line;
+    char seperator;
 } LineInfo;
 
 // Function to parse command line arguments and populate grep_args struct
