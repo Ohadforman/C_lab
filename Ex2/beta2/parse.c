@@ -26,9 +26,11 @@ void parse_args(int argc, char* argv[], grep_args* args) {
         } else if (strcmp(argv[i], "-E") == 0) {
             args->e_flag = 1;
         } else if (args->pattern == NULL) {
-            args->pattern = argv[i];
+            args->pattern = malloc(strlen(argv[i]) + 1);
+            strcpy(args->pattern, argv[i]);
         } else if (args->file_name == NULL) {
-            args->file_name = argv[i];
+            args->file_name = malloc(strlen(argv[i]) + 1);
+            strcpy(args->file_name, argv[i]);
         } else {
             fprintf(stderr, "Invalid argument: %s\n", argv[i]);
             exit(1);
@@ -43,14 +45,13 @@ void parse_args(int argc, char* argv[], grep_args* args) {
 
 
 /* Read the lines into an array */
-LineInfo* control_get_lines(grep_args* args) {
+int control_get_lines(grep_args* args, LineInfo** results) {
     FILE* fp;
     char* line = NULL;
     size_t len = 0;
     size_t read;
-    size_t total_read;
-    int line_count = -1;
-    LineInfo* results = NULL;
+    size_t total_read = 0;
+    int line_count = 0;
     int result_count = 0;
     int* search_result;
     int match_flag1;
@@ -70,7 +71,7 @@ LineInfo* control_get_lines(grep_args* args) {
         fp = fopen(args->file_name, "r");
         if (fp == NULL) {
             printf("Error opening file: %s\n", args->file_name);
-            return NULL;
+            exit(1);
         }
     }
     else {
@@ -79,7 +80,11 @@ LineInfo* control_get_lines(grep_args* args) {
     
     // Search each line for the pattern
     while ( (read = getline(&line, &len, fp)) != -1) {
-        LineInfo info = {line, line_count, total_read};
+        LineInfo* info = malloc(sizeof(LineInfo));
+        info->line_ptr = line;
+        info->line_num = line_count;
+        info->bytes_until_line = total_read;
+
         total_read += read;
         line_count ++;
 
@@ -99,14 +104,14 @@ LineInfo* control_get_lines(grep_args* args) {
         }
         free(search_result);
     }
-
-    free(line); //TODO: Is needed?
+    
+    //free(line); //TODO: Is needed?
     
     if ( fp != stdin ){
         fclose(fp);
     }
     
-    return results;
+    return result_count;
 }
 
 

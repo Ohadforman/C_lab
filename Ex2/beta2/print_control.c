@@ -4,7 +4,11 @@
 #include "print_control.h"
 #include "parse.h"
 
-void print_line(char* line,int line_number,int bytes_number, char* print_command, char* byte_command) {
+void print_line(LineInfo* current_line, char* print_command, char* byte_command) {
+    char* line = current_line->line_ptr;
+    int line_number = current_line->line_num;
+    int bytes_number = current_line->bytes_until_line;
+
     if (strcmp(byte_command, "print_bytes_until_line") == 0) {
         printf("%d ", bytes_number);
     }
@@ -19,24 +23,24 @@ void print_line(char* line,int line_number,int bytes_number, char* print_command
     }
 }
 
-void print_num_lines(FILE* file, LineInfo info, int num_lines, char* print_command, char* byte_command) {
+void print_num_lines(FILE* file, LineInfo* info, int num_lines, char* print_command, char* byte_command) {
     if (num_lines == 0) {
-        print_line(info.line_ptr, info.line_num, info.bytes_until_line, print_command, byte_command);
+        print_line(info, print_command, byte_command);
         printf("--\n");
-        free(info.line_ptr);
+        free(info->line_ptr);
         return;
     }
 
     int lines_printed = 0;
     int lines_to_print = num_lines;
-    char* line = info.line_ptr;
+    char* line = info->line_ptr;
 
     // Print the specified line and num_lines after it
     while (line && lines_printed < num_lines) {
         if (lines_printed == 0 && num_lines > 1) {
-            print_line(line, info.line_num, info.bytes_until_line, print_command, byte_command);
+            print_line(info, print_command, byte_command);
         } else if (lines_printed > 0) {
-            print_line(line, info.line_num, info.bytes_until_line, print_command, byte_command);
+            print_line(info, print_command, byte_command);
         }
 
         lines_printed++;
