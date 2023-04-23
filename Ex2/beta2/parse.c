@@ -45,7 +45,7 @@ void parse_args(int argc, char* argv[], grep_args* args) {
 
 
 /* Read the lines into an array */
-int control_get_lines(grep_args* args, LineInfo** results) {
+int control_get_lines(grep_args* args, LineInfo*** results) {
     FILE* fp;
     char* line = NULL;
     size_t len = 0;
@@ -81,7 +81,8 @@ int control_get_lines(grep_args* args, LineInfo** results) {
     // Search each line for the pattern
     while ( (read = getline(&line, &len, fp)) != -1) {
         LineInfo* info = malloc(sizeof(LineInfo));
-        info->line_ptr = line;
+        info->line_ptr = malloc(strlen(line) + 1);
+        strcpy(info->line_ptr, line);
         info->line_num = line_count;
         info->bytes_until_line = total_read;
 
@@ -99,8 +100,8 @@ int control_get_lines(grep_args* args, LineInfo** results) {
         
         if ( match_flag1 || match_flag2 || match_flag3 ) {
             result_count++;
-            results = realloc(results, result_count * sizeof(LineInfo));
-            results[result_count - 1] = info;
+            *results = realloc(*results, result_count * sizeof(LineInfo*));
+            (*results)[result_count - 1] = info;
         }
         free(search_result);
     }

@@ -4,28 +4,29 @@
 #include "print_control.h"
 #include "parse.h"
 
-void print_line(LineInfo* current_line, char* print_command, char* byte_command) {
+void print_line(LineInfo* current_line, print_type print_type, int print_bytes_until_line) {
     char* line = current_line->line_ptr;
     int line_number = current_line->line_num;
     int bytes_number = current_line->bytes_until_line;
 
-    if (strcmp(byte_command, "print_bytes_until_line") == 0) {
+    if ( print_bytes_until_line == 1 ) {
         printf("%d ", bytes_number);
     }
-    if (strcmp(print_command, "print_line_num_colon") == 0) {
+
+    if ( print_type == NUM_COLON_LINE ) {
         printf("%d:%s", line_number,line);
-    } else if (strcmp(print_command, "print_line_num_dash") == 0) {
+    } else if ( print_type == NUM_DASH_LINE ) {
         printf("%d-%s", line_number, line);
-    } else if (strcmp(print_command, "print_line_num_only") == 0) {
+    } else if ( print_type == ONLY_LINE_NUM ) {
         printf("%d", line_number);
-    }else if (strcmp(print_command, "print_without_number") == 0) {
+    }else if ( print_type == ONLY_LINE ) {
         printf("%s", line);
     }
 }
 
-void print_num_lines(FILE* file, LineInfo* info, int num_lines, char* print_command, char* byte_command) {
+void print_num_lines(FILE* file, LineInfo* info, int num_lines, print_type print_type, int print_bytes_until_line) {
     if (num_lines == 0) {
-        print_line(info, print_command, byte_command);
+        print_line(info, print_type, print_bytes_until_line);
         printf("--\n");
         free(info->line_ptr);
         return;
@@ -38,9 +39,9 @@ void print_num_lines(FILE* file, LineInfo* info, int num_lines, char* print_comm
     // Print the specified line and num_lines after it
     while (line && lines_printed < num_lines) {
         if (lines_printed == 0 && num_lines > 1) {
-            print_line(info, print_command, byte_command);
+            print_line(info, print_type, print_bytes_until_line);
         } else if (lines_printed > 0) {
-            print_line(info, print_command, byte_command);
+            print_line(info, print_type, print_bytes_until_line);
         }
 
         lines_printed++;
