@@ -48,8 +48,9 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         total_read += read;
         line_count ++;
 
-        found_match_in_line = search_pattern(line, args->pattern, case_sensitive, args->e_flag);
-        line_equal_pattern = (strcmp(args->pattern, line)==0);
+        search_result = search_pattern(line, args->pattern, case_sensitive, args->e_flag);
+        found_match_in_line = search_result[0];
+        line_equal_pattern = search_result[1];
 
         // Check if we got relevant lines for our search type
         match_flag1 = (rows_only_contain_pattern) && (line_equal_pattern);
@@ -75,10 +76,12 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
             free(info->line_ptr);
             free(info);
         }
+
+        free(search_result);
     }
     
-    free(line); //TODO: Is needed?
-    
+    free(line); 
+
     if ( fp != stdin ){
         fclose(fp);
     }
@@ -88,12 +91,14 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
 
 
 /* Search for pattern/regex in the line */
-int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
-    //int* result = malloc(2*sizeof(int));
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
+    int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
     int match = 0; 
     int skip = 0;
+    result[0] = 0;
+    result[1] = 0;
 
     for (int i = 0; i <= (line_len - pattern_len); i++) {
         // Check if the substring starting at position i matches the pattern
@@ -118,10 +123,17 @@ int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) 
                 break;
             }        
         }
+        
         if ( match == 1 ) { // Found a match
-            return 1;
+            result[0] =  1;
         }
     }
-   
-    return 0; // Pattern not found
+    
+    if ( (result[0] == 1) && (line_len-pattern_len <= 1) ) { // Check exact
+        if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
+            result[1] = 1;
+        }
+    }
+
+    return result; 
 }

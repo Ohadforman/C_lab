@@ -37,6 +37,6 @@ int control_get_lines(grep_args* args, LineInfo*** results);
 // This function searches for a pattern within a given string using a regular expression-like syntax
 // and returns an array of two integers: the first indicates if an exact match was found, and the second
 // indicates if the pattern was found at all. It uses a stack-based approach to handle grouping and alternation.
-int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex);
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex);
 
 #endif /* PARSE_H */
