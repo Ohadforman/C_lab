@@ -1,7 +1,10 @@
+#define _POSIX_C_SOURCE 200809L // Needed for getline() without warnings 
+#define _XOPEN_SOURCE 700       // Needed for getline() without warnings
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
 #include "search_logic.h"
 
 /* Read the lines into an array */
@@ -9,8 +12,8 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
     FILE* fp;
     char* line = NULL;
     size_t len = 0;
-    size_t read;
-    size_t total_read = 0;
+    ssize_t read;
+    ssize_t total_read = 0;
     int line_count = 1;
     int result_count = 0;
     int* search_result;
@@ -21,7 +24,6 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
 
     // Input flags
     int case_sensitive = !args->i_flag;
-    int only_row_num = args->c_flag;
     int rows_not_contain_pattern = args->v_flag;
     int rows_only_contain_pattern = args->x_flag;
 
