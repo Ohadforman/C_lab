@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "parse.h"
+#include "search_logic.h"
 
 /* Read the lines into an array */
 int control_get_lines(grep_args* args, LineInfo*** results) {

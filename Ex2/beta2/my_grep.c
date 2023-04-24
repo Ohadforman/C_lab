@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parse.h"
+#include "search_logic.h"
 #include "print_control.h"
 
 void free_line(LineInfo* line) {
@@ -29,8 +29,7 @@ void initialize_grep_args(grep_args** args) {
     (*args)->a_num = 0;
 }
 
-/* Parse the command line arguments */
-void parse_args(int argc, char* argv[], grep_args* args) {
+void parse_cmd_args(int argc, char* argv[], grep_args* args) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-b") == 0) {
             args->b_flag = 1;
@@ -75,7 +74,7 @@ int main(int argc, char* argv[]) {
     initialize_grep_args(&args);
 
     // Fill the args structure with the input
-    parse_args(argc, argv, args);      
+    parse_cmd_args(argc, argv, args);      
 
     // Get the lines to print (matches and additional rows from -A flag)
     rows_to_print = control_get_lines(args, &lines);

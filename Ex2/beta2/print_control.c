@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "print_control.h"
-#include "parse.h"
+#include "search_logic.h"
 
 void print_line(LineInfo* current_line, grep_args* args) {
     char* line = current_line->line_ptr;
