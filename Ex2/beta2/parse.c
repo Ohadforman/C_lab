@@ -4,46 +4,6 @@
 #include <ctype.h>
 #include "parse.h"
 
-/* Parse the command line arguments */
-void parse_args(int argc, char* argv[], grep_args* args) {
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-b") == 0) {
-            args->b_flag = 1;
-        } else if (strcmp(argv[i], "-A") == 0) {
-            args->a_flag = 1;
-            i++;
-            args->a_num = atoi(argv[i]);
-        } else if (strcmp(argv[i], "-v") == 0) {
-            args->v_flag = 1;
-        } else if (strcmp(argv[i], "-x") == 0) {
-            args->x_flag = 1;
-        } else if (strcmp(argv[i], "-i") == 0) {
-            args->i_flag = 1;
-        } else if (strcmp(argv[i], "-n") == 0) {
-            args->n_flag = 1;
-        } else if (strcmp(argv[i], "-c") == 0) {
-            args->c_flag = 1;
-        } else if (strcmp(argv[i], "-E") == 0) {
-            args->e_flag = 1;
-        } else if (args->pattern == NULL) {
-            args->pattern = malloc(strlen(argv[i]) + 1);
-            strcpy(args->pattern, argv[i]);
-        } else if (args->file_name == NULL) {
-            args->file_name = malloc(strlen(argv[i]) + 1);
-            strcpy(args->file_name, argv[i]);
-        } else {
-            fprintf(stderr, "Invalid argument: %s\n", argv[i]);
-            exit(1);
-        }
-    }
-
-    if (args->pattern == NULL) {
-        fprintf(stderr, "Missing pattern argument\n");
-        exit(1);
-    }
-}
-
-
 /* Read the lines into an array */
 int control_get_lines(grep_args* args, LineInfo*** results) {
     FILE* fp;
@@ -88,9 +48,8 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         total_read += read;
         line_count ++;
 
-        search_result = search_pattern(line, args->pattern, case_sensitive);
-        found_match_in_line = search_result[0];
-        line_equal_pattern = search_result[1];
+        found_match_in_line = search_pattern(line, args->pattern, case_sensitive, args->e_flag);
+        line_equal_pattern = (strcmp(args->pattern, line)==0);
 
         // Check if we got relevant lines for our search type
         match_flag1 = (rows_only_contain_pattern) && (line_equal_pattern);
@@ -116,7 +75,6 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
             free(info->line_ptr);
             free(info);
         }
-        free(search_result);
     }
     
     free(line); //TODO: Is needed?
@@ -130,65 +88,42 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
 
 
 /* Search for pattern/regex in the line */
-int* search_pattern(const char* line, const char* pattern, int case_sensitive) {
-    int i, j = 0;
-    int line_len = strlen(line);
+int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
     int pattern_len = strlen(pattern);
-    int* result = malloc(2*sizeof(int));
-    result[0] = 0; 
-    result[1] = 0;
+    int line_len = strlen(line);
+    int match = 0; 
+    int skip = 0;
 
-    for (i = 0; i < line_len && j < pattern_len; i++) {
-        char line_char = case_sensitive ? line[i] : tolower(line[i]);
-        char pattern_char = case_sensitive ? pattern[j] : tolower(pattern[j]);
-        
-        if ( line_char == pattern_char ){
-            j++;
-            if ( j == pattern_len ) { // We found a match
-                result[0] = 1;
+    for (int i = 0; i <= (line_len - pattern_len); i++) {
+        // Check if the substring starting at position i matches the pattern
+        match = 1;
+        for (int j = 0; j < pattern_len; j++) {
+            char p = pattern[j];
+            char l = line[i+j-skip];
+            if (!case_sensitive) {
+                p = tolower(p);
+                l = tolower(l);
             }
-            // Check if line==pattern
-            if ( i == (line_len-1) ) { 
-                result[1] = 1;
-            } else if ( (line[i+1]=='\n') && (pattern_len==line_len-1) ) {
-                result[1] = 1;
-            }
-        }
-        else {
-            j = 0;
-        }
-    }
-
-    return result;
-}    
-
-/*       
-        if ( (line_char == pattern_char) || (pattern_char == '.') ) {
-            j++;
-            if (j == pattern_len) {
-                result[1] = 1;
-                if (i + 1 == line_len || line[i + 1] == ' ') { //TODO: doesn't seem correct
-                    result[0] = 1;
+            if (is_regex && (p == '\\') && (j < pattern_len - 1) && (pattern[j+1] == '.')) {
+                // Escape character followed by a dot, check for literal dot in line
+                if (l != '.') {
+                    match = 0;
+                    break;
                 }
-            }
-        } else if (pattern_char == '(' || pattern_char == '[' || pattern_char == '{') {
-            int k = j;
-            while (pattern[k] != ')' && pattern[k] != ']' && pattern[k] != '}') {
-                k++;
-            }
-            j = k + 1;
-            if (j > pattern_len) {
+                j++;    // Skip the dot in the pattern
+                skip++; // Fix the skip in the line
+            } else if (p != l) {
+                // Regular character, check for match
+                match = 0;
                 break;
-            }
-            if ((pattern_char == '(' && line_char != ')') ||
-                (pattern_char == '[' && line_char != ']') ||
-                (pattern_char == '{' && line_char != '}')) {
-                break;
-            }
-        } else {
-            j = 0;
+            }        
+        }
+        if (match) {
+            // Found a match
+            return 1;
         }
     }
-    return result;
+   
+    // Pattern not found
+    return 0;
 }
-*/

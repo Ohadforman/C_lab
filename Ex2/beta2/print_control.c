@@ -11,12 +11,12 @@ void print_line(LineInfo* current_line, grep_args* args) {
     char seperator = current_line->seperator;
 
     if ( args->b_flag == 1 ) { // Print number of bytes untill row
-        printf("%d ", bytes_number);
+        line_number = bytes_number;
     }
 
     if ( args->c_flag == 1 ) { // Print only row number
         printf("%d", line_number);
-    } else if ( args->n_flag == 1 ) { // Print row number
+    } else if ( (args->n_flag == 1) || (args->b_flag == 1) ) { // Print row number
         printf("%d%c%s", line_number, seperator, line);
     } else {
         printf("%s", line);
