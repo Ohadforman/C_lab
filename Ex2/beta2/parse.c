@@ -89,6 +89,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
 
 /* Search for pattern/regex in the line */
 int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
+    //int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
     int match = 0; 
@@ -112,18 +113,15 @@ int search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) 
                 }
                 j++;    // Skip the dot in the pattern
                 skip++; // Fix the skip in the line
-            } else if (p != l) {
-                // Regular character, check for match
+            } else if (p != l) { // Regular character, check for match
                 match = 0;
                 break;
             }        
         }
-        if (match) {
-            // Found a match
+        if ( match == 1 ) { // Found a match
             return 1;
         }
     }
    
-    // Pattern not found
-    return 0;
+    return 0; // Pattern not found
 }

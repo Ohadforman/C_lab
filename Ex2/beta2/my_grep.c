@@ -80,9 +80,16 @@ int main(int argc, char* argv[]) {
     // Get the lines to print (matches and additional rows from -A flag)
     rows_to_print = control_get_lines(args, &lines);
     
+    // Only print number of matches
+    if ( args->c_flag == 1 ) {
+        printf("%d\n", rows_to_print);
+    }
+
     // Print and free all relevant rows
     for (int i=0; i<rows_to_print; i++) {
-        print_line(lines[i], args);
+        if ( args->c_flag == 0 ) {
+            print_line(lines[i], args);
+        }
         free_line(lines[i]);
     }
     
