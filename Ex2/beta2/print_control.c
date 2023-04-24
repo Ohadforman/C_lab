@@ -6,19 +6,19 @@
 
 void print_line(LineInfo* current_line, grep_args* args) {
     char* line = current_line->line_ptr;
-    int line_number = current_line->line_num;
-    int bytes_number = current_line->bytes_until_line;
-    char seperator = current_line->seperator;
+    int num_to_print = current_line->line_num;
 
-    if ( args->b_flag == 1 ) { // Print number of bytes untill row
-        line_number = bytes_number;
+    if ( args->b_flag == 1 ) {
+        num_to_print = current_line->bytes_until_line;
     }
 
-    if ( args->c_flag == 1 ) { // Print only row number
-        printf("%d", line_number);
-    } else if ( (args->n_flag == 1) || (args->b_flag == 1) ) { // Print row number
-        printf("%d%c%s", line_number, seperator, line);
-    } else {
+    if ( args->c_flag == 1 ) { // Print: Num
+        printf("%d", num_to_print);
+    } 
+    else if ( (args->n_flag == 1) || (args->b_flag == 1) ) { // Print: Num+Line
+        printf("%d%c%s", num_to_print, current_line->seperator, line);
+    } 
+    else { // Print: Line
         printf("%s", line);
     }
 }
