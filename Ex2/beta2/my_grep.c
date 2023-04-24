@@ -67,6 +67,20 @@ void parse_cmd_args(int argc, char* argv[], grep_args* args) {
     }
 }
 
+void print_seperator_line(LineInfo** lines, int lines_num, int i) {
+    if ( i == (lines_num-1) ) { // If we printed the last line, no need for seperator
+        return;
+    } 
+    if ( lines[i]->seperator != '-' ) { // If the line we printed was a regular match
+        return;
+    }
+    else {
+        if ( lines[i+1]->seperator == ':' ) { // If next line is regular match
+            printf("--");
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     int rows_to_print = 0;
     LineInfo** lines = malloc(sizeof(LineInfo*));
@@ -88,6 +102,7 @@ int main(int argc, char* argv[]) {
     for (int i=0; i<rows_to_print; i++) {
         if ( args->c_flag == 0 ) {
             print_line(lines[i], args);
+            print_seperator_line(lines, rows_to_print, i);
         }
         free_line(lines[i]);
     }
