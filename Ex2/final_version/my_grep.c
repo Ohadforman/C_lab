@@ -74,10 +74,9 @@ void print_seperator_line(LineInfo** lines, int lines_num, int i) {
     if ( lines[i]->seperator != '-' ) { // If the line we printed was a regular match
         return;
     }
-    else {
-        if ( lines[i+1]->seperator == ':' ) { // If next line is regular match
-            printf("--");
-        }
+    // If next line is regular match and its not the following line
+    else if ( (lines[i+1]->seperator == ':') && (lines[i]->line_num+1 != lines[i+1]->line_num) ) { 
+            printf("--\n");
     }
 }
 
