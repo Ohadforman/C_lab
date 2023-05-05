@@ -104,35 +104,57 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
-    int match, skip;
-    char p, l; 
+    int match, skip, got_escape;
+    char p, l, x = 'x', y = 'y'; 
     result[0] = 0;
     result[1] = 0;
-    //printf("Lengths: %d %d\n", pattern_len, line_len);
+    
     for (int i = 0; i < line_len; i++) {
         // Check if the substring starting at position i matches the pattern
         match = 1;
         skip = 0;
         for (int j = 0; j < pattern_len; j++) {
-            //printf("%d %d\n", j, i);
+            got_escape = 0;
             p = pattern[j];
             l = line[i+j-skip];
             
+            if ( (is_regex == 1) && (p == '.') ) { // We always match
+                continue;
+            }
+
+            if ( (is_regex == 1) && (p == '[') ) { // Regex [x-y]
+                x = pattern[j+1];
+                y = pattern[j+3];
+                j += 4;         // To skip x-y]
+                skip += 4;      // Fix the skip in the line    
+            }
+
             if ( p == '\\' ) {      // Escape character
                 p = pattern[++j];   // Skip escape char
                 skip++;             // Fix the skip in the line
+                got_escape = 1;
             }
             
             if ( !case_sensitive ) {
                 p = tolower(p);
                 l = tolower(l);
+                x = tolower(x);
+                y = tolower(y);
             }
-            
-            //printf("%d %d %c %c %d\n", j, i, p, l, p==l);
-            if (p != l) { // Regular character, check for match
+
+            if ( is_regex == 1 ) {
+                //printf("P: %c, L: %c, X: %c, Y: %c E=%d\n", p, l, x, y, got_escape);
+                if ( (got_escape==0) && (p == '[') && !((x<=l)&&(l<=y)) ) {
+                    match = 0;
+                    break; 
+                } else if ( ((got_escape==1) || (p != '[')) && (p != l) ){
+                    match = 0;
+                    break; 
+                }
+            } else if ( p != l ) {
                 match = 0;
                 break;
-            }        
+            }     
         }
         
         if ( match == 1 ) { // Found a match
