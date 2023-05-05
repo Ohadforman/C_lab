@@ -1,6 +1,4 @@
-abc123
-[1-6]sdasd
-[1-6
-sd
-123
-1f
+str1aaastr2
+str1
+str2
+str1aaastr3

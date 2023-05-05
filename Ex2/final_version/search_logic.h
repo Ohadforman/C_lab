@@ -1,9 +1,6 @@
 #ifndef SEARCH_LOGIC_H
 #define SEARCH_LOGIC_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 // Struct to hold parsed command line arguments
 typedef struct grep_args {
     char* pattern;

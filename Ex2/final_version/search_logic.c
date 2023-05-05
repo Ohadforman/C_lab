@@ -117,7 +117,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             got_escape = 0;
             p = pattern[j];
             l = line[i+j-skip];
-            
+            //printf("%c %c\n", p, l);
             if ( (is_regex == 1) && (p == '.') ) { // We always match
                 continue;
             }
@@ -127,6 +127,56 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 y = pattern[j+3];
                 j += 4;         // To skip x-y]
                 skip += 4;      // Fix the skip in the line    
+            }
+
+            // TODO = add case sensitive
+            if ( (is_regex == 1) && (p == '(') ) { // Regex (str1|str2)
+                char* new_start = pattern + j;
+                char* close_paren = strchr(new_start, ')');
+                char* pipe = strchr(new_start, '|');
+                int str1_len = pipe-new_start-1;
+                int str2_len = close_paren-pipe-1;
+                char* str1 = (char*)malloc(str1_len + 1);
+                char* str2 = (char*)malloc(str2_len + 1);
+                strncpy(str1, new_start+1, str1_len);
+                strncpy(str2, pipe+1, str2_len); 
+                //printf("%s %s\n", str1, str2);
+                int line_index = i+j-skip;
+                int check1 = 0;
+                int check2 = 0;
+                if (line_index+str1_len-1 < line_len) {
+                    for (int k=0; k<str1_len; k++){
+                        char p1 = case_sensitive ? line[line_index+k] : tolower(line[line_index+k]);
+                        char p2 = case_sensitive ? str1[k] : tolower(str1[k]);
+                        if ( p1 != p2 ) {
+                            check1++;
+                            break;
+                        }
+                    } 
+                } else {
+                    check1++;
+                }
+                if (line_index+str2_len-1 < line_len) {
+                    for (int k=0; k<str2_len; k++){
+                        char p1 = case_sensitive ? line[line_index+k] : tolower(line[line_index+k]);
+                        char p2 = case_sensitive ? str2[k] : tolower(str2[k]);
+                        if ( p1 != p2 ) {
+                            check2++;
+                            break;
+                        }
+                    } 
+                } else {
+                    check2++;
+                }
+                if ( (check1 > 0) && (check2 > 0) ) {
+                    match = 0;
+                    break; 
+                }
+                
+                j += str1_len + str2_len + 2;
+                skip += str1_len + str2_len + 2;
+                i += (check1==0) ? (str1_len-1) : (str2_len-1);
+                continue;  
             }
 
             if ( p == '\\' ) {      // Escape character
