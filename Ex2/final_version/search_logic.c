@@ -67,7 +67,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         total_read += read;
         line_count ++;
 
-        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag);
+        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag, 0);
         is_relevant = is_row_relevant(search_result, args);
 
         if ( is_relevant || (num_rows_after > 0) ) {
@@ -100,6 +100,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
 
 /* Check if current char fits the pattern*/
 int is_mismatch(int is_range, char p, char l, char x, char y) {
+    printf("Input %c %c %d \n",p,l,is_range);
     if ( ( is_range == 1 ) && !( (x<=l)&&(l<=y) ) ) { // We got l not in range [x-y]
         return 1;
     }  
@@ -147,7 +148,7 @@ int check_if_exact_match(int match_found, int line_len, int pattern_len, char* l
 }
 
 /* Search for pattern/regex in the line */
-int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex, int shift) {
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
@@ -163,9 +164,9 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             is_range = 0;
             p = pattern[j];
             l = line[i+j-skip];
-            //printf("%c %c\n", p, l);
+            
             if ( (is_regex == 1) && (p == '.') ) { // Regex .
-                continue;
+                p = l;
             }
 
             if ( (is_regex == 1) && (p == '[') ) { // Regex [x-y]
@@ -184,7 +185,6 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                     exit(1);
                 }
                 char* close_parem = extract_substring_options(&pattern, j, &str1, &str2);
-                //printf("Pattern: {%s} Substrings: {%s} {%s}\n", pattern, str1, str2);
 
                 int left_untill_end = pattern + pattern_len - close_parem -1;
                 int possible_pattern1_len = strlen(str1) + left_untill_end;
@@ -203,9 +203,9 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
 
                 possible_pattern1 = strcat(possible_pattern1, close_parem+1);
                 possible_pattern2 = strcat(possible_pattern2, close_parem+1);
-
-                int* result1 = search_pattern(line+i, possible_pattern1, case_sensitive, is_regex);
-                int* result2 = search_pattern(line+i, possible_pattern2, case_sensitive, is_regex);
+                printf("{%s} {%s} {%s}\n\n", line+shift, possible_pattern1, possible_pattern2);
+                int* result1 = search_pattern(line+shift, possible_pattern1, case_sensitive, is_regex, shift);
+                int* result2 = search_pattern(line+shift, possible_pattern2, case_sensitive, is_regex, shift);
                 free(possible_pattern1);
                 free(possible_pattern2);
 
@@ -213,7 +213,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 result[1] = result1[1] || result2[1];
                 free(result1);
                 free(result2);
-
+                
                 return result;
             }
 
@@ -232,9 +232,11 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             if ( is_mismatch(is_range, p, l, x, y) ) {
                 match = 0;
                 break;
-            }    
+            }  
+
+            shift++;  
         }
-        
+        printf("Match %d\n",match);
         if ( match == 1 ) { // Found a match
             result[0] =  1;
             break;
