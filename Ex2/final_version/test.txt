@@ -1,8 +1,1 @@
-hi
-hello
-hellohello
-blabla
-ttt
-blablahello
-cccc
-lalalala
+ <li> <a href="C-intro.pdf">Revisiting C</a>

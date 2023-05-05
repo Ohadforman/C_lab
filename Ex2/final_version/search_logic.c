@@ -104,30 +104,32 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
-    int match = 0; 
-    int skip = 0;
+    int match, skip;
+    char p, l; 
     result[0] = 0;
     result[1] = 0;
-
-    for (int i = 0; i <= (line_len - pattern_len); i++) {
+    //printf("Lengths: %d %d\n", pattern_len, line_len);
+    for (int i = 0; i < line_len; i++) {
         // Check if the substring starting at position i matches the pattern
         match = 1;
+        skip = 0;
         for (int j = 0; j < pattern_len; j++) {
-            char p = pattern[j];
-            char l = line[i+j-skip];
-            if (!case_sensitive) {
+            //printf("%d %d\n", j, i);
+            p = pattern[j];
+            l = line[i+j-skip];
+            
+            if ( p == '\\' ) {      // Escape character
+                p = pattern[++j];   // Skip escape char
+                skip++;             // Fix the skip in the line
+            }
+            
+            if ( !case_sensitive ) {
                 p = tolower(p);
                 l = tolower(l);
             }
-            if (is_regex && (p == '\\') && (j < pattern_len - 1) && (pattern[j+1] == '.')) {
-                // Escape character followed by a dot, check for literal dot in line
-                if (l != '.') {
-                    match = 0;
-                    break;
-                }
-                j++;    // Skip the dot in the pattern
-                skip++; // Fix the skip in the line
-            } else if (p != l) { // Regular character, check for match
+            
+            //printf("%d %d %c %c %d\n", j, i, p, l, p==l);
+            if (p != l) { // Regular character, check for match
                 match = 0;
                 break;
             }        
@@ -135,6 +137,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
         
         if ( match == 1 ) { // Found a match
             result[0] =  1;
+            break;
         }
     }
     
