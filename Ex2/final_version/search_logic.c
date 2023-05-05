@@ -109,6 +109,43 @@ int is_mismatch(int is_range, char p, char l, char x, char y) {
     return 0;
 }
 
+/**/
+char* extract_substring_options(char** pattern, int index, char** str1, char** str2) {
+    char* open_parem = (*pattern) + index;
+    char* close_paren = strchr(open_parem, ')');
+    char* pipe = strchr(open_parem, '|');
+    int str1_len = pipe-open_parem-1;
+    int str2_len = close_paren-pipe-1;
+
+    *str1 = (char*)realloc(*str1, str1_len + 1);
+    if ( *str1 == NULL) {
+        printf("Failed to allocate memory to substring\n");
+        exit(1);
+    }
+    strncpy(*str1, open_parem+1, str1_len);
+    (*str1)[str1_len] = '\0';
+    
+    *str2 = (char*)realloc(*str2, str2_len + 1);
+    if ( *str2 == NULL) {
+        printf("Failed to allocate memory to substring\n");
+        exit(1);
+    }
+    strncpy(*str2, pipe+1, str2_len); 
+    (*str2)[str2_len] = '\0';
+
+    return close_paren;
+}
+
+/* Checks if the line is exact match of the pattern*/
+int check_if_exact_match(int match_found, int line_len, int pattern_len, char* line) { //TODO - FIX for regex
+    if ( (match_found == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
+        if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Search for pattern/regex in the line */
 int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
     int* result = malloc(2*sizeof(int));
@@ -127,7 +164,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             p = pattern[j];
             l = line[i+j-skip];
             //printf("%c %c\n", p, l);
-            if ( (is_regex == 1) && (p == '.') ) { // We always match
+            if ( (is_regex == 1) && (p == '.') ) { // Regex .
                 continue;
             }
 
@@ -139,62 +176,53 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 is_range = 1;   // Flag we nee a range check instead of regular compare
             }
 
-            // TODO = add case sensitive
             if ( (is_regex == 1) && (p == '(') ) { // Regex (str1|str2)
-                char* new_start = pattern + j;
-                char* close_paren = strchr(new_start, ')');
-                char* pipe = strchr(new_start, '|');
-                int str1_len = pipe-new_start-1;
-                int str2_len = close_paren-pipe-1;
-                char* str1 = (char*)malloc(str1_len + 1);
-                char* str2 = (char*)malloc(str2_len + 1);
-                strncpy(str1, new_start+1, str1_len);
-                strncpy(str2, pipe+1, str2_len); 
-                //printf("%s %s\n", str1, str2);
-                int line_index = i+j-skip;
-                int check1 = 0;
-                int check2 = 0;
-                if (line_index+str1_len-1 < line_len) {
-                    for (int k=0; k<str1_len; k++){
-                        char p1 = case_sensitive ? line[line_index+k] : tolower(line[line_index+k]);
-                        char p2 = case_sensitive ? str1[k] : tolower(str1[k]);
-                        if ( p1 != p2 ) {
-                            check1++;
-                            break;
-                        }
-                    } 
-                } else {
-                    check1++;
+                char* str1 = (char*)malloc(10);
+                char* str2 = (char*)malloc(10);
+                if ( (str1==NULL) || (str2==NULL) ) {
+                    printf("Failed to allocate memory to possible pattern\n");
+                    exit(1);
                 }
-                if (line_index+str2_len-1 < line_len) {
-                    for (int k=0; k<str2_len; k++){
-                        char p1 = case_sensitive ? line[line_index+k] : tolower(line[line_index+k]);
-                        char p2 = case_sensitive ? str2[k] : tolower(str2[k]);
-                        if ( p1 != p2 ) {
-                            check2++;
-                            break;
-                        }
-                    } 
-                } else {
-                    check2++;
-                }
-                if ( (check1 > 0) && (check2 > 0) ) {
-                    match = 0;
-                    break; 
+                char* close_parem = extract_substring_options(&pattern, j, &str1, &str2);
+                //printf("Pattern: {%s} Substrings: {%s} {%s}\n", pattern, str1, str2);
+
+                int left_untill_end = pattern + pattern_len - close_parem -1;
+                int possible_pattern1_len = strlen(str1) + left_untill_end;
+                int possible_pattern2_len = strlen(str2) + left_untill_end;
+                char* possible_pattern1 = (char*)malloc(possible_pattern1_len+1);
+                char* possible_pattern2 = (char*)malloc(possible_pattern2_len+1);
+                if ( (possible_pattern1==NULL) || (possible_pattern2==NULL) ) {
+                    printf("Failed to allocate memory to possible pattern\n");
+                    exit(1);
                 }
                 
-                j += str1_len + str2_len + 2;
-                skip += str1_len + str2_len + 2;
-                i += (check1==0) ? (str1_len-1) : (str2_len-1);
-                continue;  
+                strcpy(possible_pattern1, str1);
+                strcpy(possible_pattern2, str2);
+                free(str1);
+                free(str2);
+
+                possible_pattern1 = strcat(possible_pattern1, close_parem+1);
+                possible_pattern2 = strcat(possible_pattern2, close_parem+1);
+
+                int* result1 = search_pattern(line+i, possible_pattern1, case_sensitive, is_regex);
+                int* result2 = search_pattern(line+i, possible_pattern2, case_sensitive, is_regex);
+                free(possible_pattern1);
+                free(possible_pattern2);
+
+                result[0] = result1[0] || result2[0];
+                result[1] = result1[1] || result2[1];
+                free(result1);
+                free(result2);
+
+                return result;
             }
 
-            if ( p == '\\' ) {      // Escape character
+            if ( (is_regex == 1) && (p == '\\') ) {      // Escape character
                 p = pattern[++j];   // Skip escape char
                 skip++;             // Fix the skip in the line
             }
             
-            if ( !case_sensitive ) {
+            if ( !case_sensitive ) { // If not case sensitive change all to lower
                 p = tolower(p);
                 l = tolower(l);
                 x = tolower(x);
@@ -213,11 +241,6 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
         }
     }
     
-    if ( (result[0] == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
-        if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
-            result[1] = 1;
-        }
-    }
-
+    result[1] = check_if_exact_match(result[0], line_len, pattern_len, line);
     return result; 
 }
