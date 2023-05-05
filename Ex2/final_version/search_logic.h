@@ -31,15 +31,4 @@ typedef struct LineInfo {
 // and can be case-sensitive or case-insensitive.
 int control_get_lines(grep_args* args, LineInfo*** results);
 
-/**
- * @brief Searches for the pattern in the line
- * 
- * @param line 
- * @param pattern 
- * @param case_sensitive 
- * @param is_regex 
- * @return int[2] = {match_found, is_exact_match}
- */
-int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex, int shift);
-
 #endif /* SEARCH_LOGIC_H */
