@@ -98,23 +98,32 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
     return result_count;
 }
 
+/* Check if current char fits the pattern*/
+int is_mismatch(int is_range, char p, char l, char x, char y) {
+    if ( ( is_range == 1 ) && !( (x<=l)&&(l<=y) ) ) { // We got l not in range [x-y]
+        return 1;
+    }  
+    if ( ( is_range == 0 ) && ( p != l ) ) { // If it's not a range we just compare
+        return 1;
+    } 
+    return 0;
+}
 
 /* Search for pattern/regex in the line */
 int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
-    int match, skip, got_escape;
+    int match, skip, is_range;
     char p, l, x = 'x', y = 'y'; 
     result[0] = 0;
     result[1] = 0;
     
     for (int i = 0; i < line_len; i++) {
-        // Check if the substring starting at position i matches the pattern
         match = 1;
         skip = 0;
         for (int j = 0; j < pattern_len; j++) {
-            got_escape = 0;
+            is_range = 0;
             p = pattern[j];
             l = line[i+j-skip];
             //printf("%c %c\n", p, l);
@@ -126,7 +135,8 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 x = pattern[j+1];
                 y = pattern[j+3];
                 j += 4;         // To skip x-y]
-                skip += 4;      // Fix the skip in the line    
+                skip += 4;      // Fix the skip in the line 
+                is_range = 1;   // Flag we nee a range check instead of regular compare
             }
 
             // TODO = add case sensitive
@@ -182,7 +192,6 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             if ( p == '\\' ) {      // Escape character
                 p = pattern[++j];   // Skip escape char
                 skip++;             // Fix the skip in the line
-                got_escape = 1;
             }
             
             if ( !case_sensitive ) {
@@ -192,19 +201,10 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 y = tolower(y);
             }
 
-            if ( is_regex == 1 ) {
-                //printf("P: %c, L: %c, X: %c, Y: %c E=%d\n", p, l, x, y, got_escape);
-                if ( (got_escape==0) && (p == '[') && !((x<=l)&&(l<=y)) ) {
-                    match = 0;
-                    break; 
-                } else if ( ((got_escape==1) || (p != '[')) && (p != l) ){
-                    match = 0;
-                    break; 
-                }
-            } else if ( p != l ) {
+            if ( is_mismatch(is_range, p, l, x, y) ) {
                 match = 0;
                 break;
-            }     
+            }    
         }
         
         if ( match == 1 ) { // Found a match
@@ -213,7 +213,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
         }
     }
     
-    if ( (result[0] == 1) && (line_len-pattern_len <= 1) ) { // Check exact
+    if ( (result[0] == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
         if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
             result[1] = 1;
         }
