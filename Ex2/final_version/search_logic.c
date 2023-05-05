@@ -39,6 +39,12 @@ LineInfo* create_lineinfo_object(char* line, int line_count, int total_read) {
     return info;
 }
 
+/*TODO - warning: pointer parameter 'search_result' can be pointer to const [readability-non-const-parameter]
+int is_row_relevant(int *search_result, grep_args *args)
+                    ~~~  ^
+                    const          */
+
+
 /* Checks if we need to print the current row based on our search parameters*/
 int is_row_relevant(int* search_result, grep_args* args) {
     int exact_match_search_found;
@@ -95,6 +101,12 @@ char* extract_substring_options(char** pattern, int index, char** str1, char** s
     return close_paren;
 }
 
+/*TODO - warning: pointer parameter 'line' can be pointer to const [readability-non-const-parameter]
+int check_if_exact_match(int match_found, int line_len, int pattern_len, char *line)
+                                                                         ~~~~  ^
+                                                                         const*/
+
+
 /* Checks if the line is exact match of the pattern*/
 int check_if_exact_match(int match_found, int line_len, int pattern_len, char* line) { //TODO - FIX for regex
     if ( (match_found == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
@@ -105,8 +117,16 @@ int check_if_exact_match(int match_found, int line_len, int pattern_len, char* l
     return 0;
 }
 
+/* TODO - warning: function 'search_pattern' exceeds recommended 
+size/complexity thresholds [google-readability-function-size]
+int *search_pattern(char *line, char *pattern, int case_sensitive, int is_regex)
+     ^
+/a/home/cc/students/csguests/ohadforman/c_lab/ex2/final_version/search_logic.c:114:6: 
+note: 100 lines including whitespace and comments (threshold 50) */
+
+
 /* Search for pattern/regex in the line */
-int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) {
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) { // TODO - note: 100 lines including whitespace and comments (threshold 50)
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
@@ -138,7 +158,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
             if ( (is_regex == 1) && (p == '(') ) { // Regex (str1|str2)
                 char* str1 = (char*)malloc(1);
                 char* str2 = (char*)malloc(1);
-                if ( (str1==NULL) || (str2==NULL) ) {
+                if ( (str1==NULL) || (str2==NULL) ) { //TODO - note: nesting level 5 starts here (threshold 4)
                     printf("Failed to allocate memory to possible pattern\n");
                     exit(1);
                 }
@@ -148,7 +168,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 int possible_pattern2_len = pattern_len - strlen(str1) - NUM_OF_CHARS_TO_IGNORE_IN_PATTERN;
                 char* possible_pattern1 = (char*)malloc(possible_pattern1_len+1);
                 char* possible_pattern2 = (char*)malloc(possible_pattern2_len+1);
-                if ( (possible_pattern1==NULL) || (possible_pattern2==NULL) ) {
+                if ( (possible_pattern1==NULL) || (possible_pattern2==NULL) ) {// TODO - note: nesting level 5 starts here (threshold 4)
                     printf("Failed to allocate memory to possible pattern\n");
                     exit(1);
                 }
