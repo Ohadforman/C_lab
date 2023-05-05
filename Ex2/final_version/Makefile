@@ -15,5 +15,13 @@ print_control.o: print_control.c print_control.h
 search_logic.o: search_logic.c search_logic.h
 	$(CC) $(CFLAGS) -c search_logic.c
 
+
+.PHONY: clean all test
+
 clean:
-	rm -f $(OBJS) my_grep
+	@-rm -f *.o my_grep
+
+all: my_grep
+
+test:
+	/specific/a/home/cc/students/csguests/nimrodav/grep_tests/run_all.sh
