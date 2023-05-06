@@ -1,8 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "print_control.h"
+
+#include "arg2command.h"
 #include "search_logic.h"
+#include "print_control.h"
+
+void free_line(LineInfo* line) {
+    free(line->line_ptr);
+    free(line);
+}
+
 
 void print_line(LineInfo* current_line, grep_args* args) {
     char* line = current_line->line_ptr;

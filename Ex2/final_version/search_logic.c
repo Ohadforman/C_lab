@@ -5,6 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include "arg2command.h"
 #include "search_logic.h"
 
 #define LOW_RANGE_NEEDED_SHIFT              1
@@ -101,21 +102,6 @@ char* extract_substring_options(char** pattern, int index, char** str1, char** s
     return close_paren;
 }
 
-/*TODO - warning: pointer parameter 'line' can be pointer to const [readability-non-const-parameter]
-int check_if_exact_match(int match_found, int line_len, int pattern_len, char *line)
-                                                                         ~~~~  ^
-                                                                         const*/
-
-
-/* Checks if the line is exact match of the pattern*/
-int check_if_exact_match(int match_found, int line_len, int pattern_len, char* line) { //TODO - FIX for regex
-    if ( (match_found == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
-        if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 /* TODO - warning: function 'search_pattern' exceeds recommended 
 size/complexity thresholds [google-readability-function-size]
@@ -126,19 +112,20 @@ note: 100 lines including whitespace and comments (threshold 50) */
 
 
 /* Search for pattern/regex in the line */
-int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) { // TODO - note: 100 lines including whitespace and comments (threshold 50)
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex,int is_exact) { // TODO - note: 100 lines including whitespace and comments (threshold 50)
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
     int match, skip, is_range;
     char p, l, low_range = 'x', high_range = 'y'; 
     result[0] = 0;
-    result[1] = 0;
+    result[1] = 1;
     
-    for (int i = 0; i < line_len; i++) {
+    int i, j;
+    for (i = 0; i < line_len; i++) {
         match = 1;
         skip = 0;
-        for (int j = 0; j < pattern_len; j++) {
+        for (j = 0; j < pattern_len; j++) {
             is_range = 0;
             p = pattern[j];
             l = line[i+j-skip];
@@ -186,8 +173,8 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 possible_pattern1 = strcat(possible_pattern1, close_parem+1);
                 possible_pattern2 = strcat(possible_pattern2, close_parem+1);
                 //printf("{%s} {%s} {%s}\n\n", line, possible_pattern1, possible_pattern2);
-                int* result1 = search_pattern(line, possible_pattern1, case_sensitive, is_regex);
-                int* result2 = search_pattern(line, possible_pattern2, case_sensitive, is_regex);
+                int* result1 = search_pattern(line, possible_pattern1, case_sensitive, is_regex,is_exact);
+                int* result2 = search_pattern(line, possible_pattern2, case_sensitive, is_regex,is_exact);
                 free(possible_pattern1);
                 free(possible_pattern2);
 
@@ -213,6 +200,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
 
             if ( is_mismatch(is_range, p, l, low_range, high_range) ) {
                 match = 0;
+                result[1] = 0; // If we got a mismatch it can't be an exact match
                 break;
             }   
         }
@@ -223,7 +211,9 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
         }
     }
     
-    result[1] = check_if_exact_match(result[0], line_len, pattern_len, line);
+    if (i+j-skip != line_len-1) { // Checks we got to the last index in the line
+        result[1] = 0; // If not it's not exact (we got extra chars at the end)
+    }
     return result; 
 }
 
@@ -244,7 +234,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         total_read += read;
         line_count ++;
 
-        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag);
+        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag, args->x_flag);
         is_relevant = is_row_relevant(search_result, args);
 
         if ( is_relevant || (num_rows_after > 0) ) {

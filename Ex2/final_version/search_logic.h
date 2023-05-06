@@ -1,20 +1,9 @@
 #ifndef SEARCH_LOGIC_H
 #define SEARCH_LOGIC_H
 
+#include "arg2command.h"
 // Struct to hold parsed command line arguments
-typedef struct grep_args {
-    char* pattern;
-    char* file_name;
-    int c_flag;
-    int n_flag;
-    int i_flag;
-    int v_flag;
-    int x_flag;
-    int e_flag;
-    int b_flag;
-    int a_flag;
-    int a_num;
-} grep_args;
+
 
 // Struct to hold line info
 typedef struct LineInfo {
