@@ -108,16 +108,6 @@ int check_if_exact_match(int match_found, int line_len, int pattern_len, char *l
                                                                          const*/
 
 
-/* Checks if the line is exact match of the pattern*/
-int check_if_exact_match(int match_found, int line_len, int pattern_len, char* line) { //TODO - FIX for regex
-    if ( (match_found == 1) && (line_len-pattern_len <= 1) ) { // Check exact match
-        if ( (line[line_len-1] == '\n') || (line_len-pattern_len == 0) ) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 /* TODO - warning: function 'search_pattern' exceeds recommended 
 size/complexity thresholds [google-readability-function-size]
 int *search_pattern(char *line, char *pattern, int case_sensitive, int is_regex)
@@ -134,12 +124,13 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex,
     int match, skip, is_range;
     char p, l, low_range = 'x', high_range = 'y'; 
     result[0] = 0;
-    result[1] = 0;
+    result[1] = 1;
     
-    for (int i = 0; i < line_len; i++) {
+    int i, j;
+    for (i = 0; i < line_len; i++) {
         match = 1;
         skip = 0;
-        for (int j = 0; j < pattern_len; j++) {
+        for (j = 0; j < pattern_len; j++) {
             is_range = 0;
             p = pattern[j];
             l = line[i+j-skip];
@@ -214,6 +205,7 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex,
 
             if ( is_mismatch(is_range, p, l, low_range, high_range) ) {
                 match = 0;
+                result[1] = 0; // If we got a mismatch it can't be an exact match
                 break;
             }   
         }
@@ -224,7 +216,10 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex,
         }
     }
     
-    result[1] = check_if_exact_match(result[0], line_len, pattern_len, line);
+    if (i+j-skip != line_len-1) { // Checks we got to the last index in the line
+        result[1] = 0; // If not it's not exact (we got extra chars at the end)
+    }
+    //result[1] = check_if_exact_match(result[0], line_len, pattern_len, line);
     return result; 
 }
 
