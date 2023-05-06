@@ -44,3 +44,18 @@ int *search_pattern(char *line, char *pattern, int case_sensitive, int is_regex)
 
 - [ ] 
 - DESIGN File not found!
+
+___
+
+
+## To think about args.c/.h
+clear my_grep, leave with only main. all the args functions 
+**free_args**,
+**initialize_grep_args**,
+**parse_cmd_args**,
+to args modul (args2command?).
+
+
+also **struct grep_args** from search_logic 
+
+*make it main, **my_grep**, use modul args to start, continue with search and finish with print.*
