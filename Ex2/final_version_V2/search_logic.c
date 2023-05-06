@@ -1,15 +1,13 @@
+#define _POSIX_C_SOURCE 200809L // Needed for getline() without warnings 
+#define _XOPEN_SOURCE 700       // Needed for getline() without warnings
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-
 #include "arg2command.h"
 #include "search_logic.h"
 
-
-#define _POSIX_C_SOURCE 200809L // Needed for getline() without warnings 
-#define _XOPEN_SOURCE 700       // Needed for getline() without warnings
 #define LOW_RANGE_NEEDED_SHIFT              1
 #define HIGH_RANGE_NEEDED_SHIFT             3
 #define NUM_OF_CHARS_TO_SKIP_IF_RANGE       4 
@@ -129,7 +127,7 @@ note: 100 lines including whitespace and comments (threshold 50) */
 
 
 /* Search for pattern/regex in the line */
-int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex) { // TODO - note: 100 lines including whitespace and comments (threshold 50)
+int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex,int is_exact) { // TODO - note: 100 lines including whitespace and comments (threshold 50)
     int* result = malloc(2*sizeof(int));
     int pattern_len = strlen(pattern);
     int line_len = strlen(line);
@@ -189,8 +187,8 @@ int* search_pattern(char* line, char* pattern, int case_sensitive, int is_regex)
                 possible_pattern1 = strcat(possible_pattern1, close_parem+1);
                 possible_pattern2 = strcat(possible_pattern2, close_parem+1);
                 //printf("{%s} {%s} {%s}\n\n", line, possible_pattern1, possible_pattern2);
-                int* result1 = search_pattern(line, possible_pattern1, case_sensitive, is_regex);
-                int* result2 = search_pattern(line, possible_pattern2, case_sensitive, is_regex);
+                int* result1 = search_pattern(line, possible_pattern1, case_sensitive, is_regex,is_exact);
+                int* result2 = search_pattern(line, possible_pattern2, case_sensitive, is_regex,is_exact);
                 free(possible_pattern1);
                 free(possible_pattern2);
 
@@ -247,7 +245,7 @@ int control_get_lines(grep_args* args, LineInfo*** results) {
         total_read += read;
         line_count ++;
 
-        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag);
+        search_result = search_pattern(line, args->pattern, !args->i_flag, args->e_flag, args->x_flag);
         is_relevant = is_row_relevant(search_result, args);
 
         if ( is_relevant || (num_rows_after > 0) ) {

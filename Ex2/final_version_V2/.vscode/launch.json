@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/ohadformanair/Documents/עותק של C_lab/Ex2/final_version",
-      "program": "/Users/ohadformanair/Documents/עותק של C_lab/Ex2/final_version/build/Debug/outDebug"
+      "cwd": "/Users/ohadformanair/Documents/Git/C_lab/Ex2/final_version_V2",
+      "program": "/Users/ohadformanair/Documents/Git/C_lab/Ex2/final_version_V2/build/Debug/outDebug"
     }
   ]
 }
