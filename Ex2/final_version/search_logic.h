@@ -1,7 +1,7 @@
 #ifndef SEARCH_LOGIC_H
 #define SEARCH_LOGIC_H
 
-#include "arg2command.h"
+#include "args_parser.h"
 // Struct to hold parsed command line arguments
 
 

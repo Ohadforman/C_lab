@@ -1,5 +1,5 @@
-#ifndef ARG2COMMAND_H
-#define ARG2COMMAND_H
+#ifndef ARGS_PARSER_H
+#define ARGS_PARSER_H
 
 
 typedef struct grep_args {
@@ -19,4 +19,4 @@ typedef struct grep_args {
 void free_args(grep_args* args);
 void initialize_grep_args(grep_args** args);
 void parse_cmd_args(int argc, char* argv[], grep_args* args); 
-#endif /* ARG2COMMAND_H */
+#endif /* ARGS_PARSER_H */

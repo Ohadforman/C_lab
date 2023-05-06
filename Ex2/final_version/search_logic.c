@@ -5,7 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include "arg2command.h"
+#include "args_parser.h"
 #include "search_logic.h"
 
 #define LOW_RANGE_NEEDED_SHIFT              1

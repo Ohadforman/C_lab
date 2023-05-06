@@ -1,6 +1,6 @@
 #ifndef PRINT_CONTROL_H
 #define PRINT_CONTROL_H
-#include "arg2command.h"
+#include "args_parser.h"
 #include "search_logic.h"
 
 // Print a line from the file according to the specified print and line commands
