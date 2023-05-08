@@ -5,12 +5,11 @@
 
 // Struct to hold line info
 typedef struct LineInfo {
-    char* line_ptr;
-    int line_num;
-    int bytes_until_line;
-    char seperator;
+  char* line_ptr;
+  int line_num;
+  int bytes_until_line;
+  char seperator;
 } LineInfo;
-
 
 int control_get_lines(grep_args* args, LineInfo*** results);
 
