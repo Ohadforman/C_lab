@@ -15,16 +15,16 @@ void free_line(LineInfo* line)
 void print_line(LineInfo* current_line, grep_args* args)
 {
   char* line = current_line->line_ptr;
-  int num_to_print = current_line->line_num;
-
-  if (args->b_flag == 1) {
-    num_to_print = current_line->bytes_until_line;
-  }
 
   if (args->c_flag == 1) {  // Print: Num
-    printf("%d", num_to_print);
-  } else if ((args->n_flag == 1) || (args->b_flag == 1)) {  // Print: Num+Line
-    printf("%d%c%s", num_to_print, current_line->seperator, line);
+    printf("%d", current_line->line_num);
+  } else if ((args->n_flag == 1) && (args->b_flag == 1)) {  // Print: Both nums
+    printf("%d%c%d%c%s", current_line->line_num, current_line->seperator, current_line->bytes_until_line,
+           current_line->seperator, line);
+  } else if (args->n_flag == 1) {  // Print: Line_num+Line
+    printf("%d%c%s", current_line->line_num, current_line->seperator, line);
+  } else if (args->b_flag == 1) {
+    printf("%d%c%s", current_line->bytes_until_line, current_line->seperator, line);
   } else {  // Print: Line
     printf("%s", line);
   }
