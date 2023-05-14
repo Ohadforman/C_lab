@@ -1,8 +1,6 @@
 #ifndef LB_BACK_END_H
 #define LB_BACK_END_H
 
-
-
 #define BUFFER_SIZE 1024
 
 int bind_and_listen(int *sockfd);
