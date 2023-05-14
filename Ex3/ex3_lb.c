@@ -64,18 +64,18 @@ void run_load_balancer(int sockfd_server, int sockfd_client, int server_port, in
 int main() {
     int sockfd_server, sockfd_client;
     int server_port, client_port;
-
     server_port = bind_and_listen(&sockfd_server);
     client_port = bind_and_listen(&sockfd_client);
-
+    
     // Save the ports to files
     write_port_to_file(server_port, "server_port");
     write_port_to_file(client_port, "http_port");
 
+  
     int server_sockfd = wait_for_connection(sockfd_server);
-    printf("Server connected on port %d...\n", server_port);
-
+    printf("Server  connected on port %d...\n", server_port);
     run_load_balancer(server_sockfd, sockfd_client, server_port, client_port);
+
 
     return 0;
 }
