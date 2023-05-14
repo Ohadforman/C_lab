@@ -36,7 +36,8 @@ while retry_count < max_retries:
             time.sleep(1)
         else:
             print("Max retries reached. Exiting.")
-            sys.exit(1)
+            print("Disconnected.")
+            sys.exit()
 
 # Send a message to the LB
 message = "GET /count HTTP/1.1"
