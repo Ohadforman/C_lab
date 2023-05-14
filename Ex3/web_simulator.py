@@ -3,7 +3,6 @@ import sys
 import subprocess
 import time
 
-
 # Check if the port is provided as a command-line argument
 if len(sys.argv) != 2:
     print("Usage: python3 client.py <port>")
@@ -39,15 +38,16 @@ while retry_count < max_retries:
             print("Disconnected.")
             sys.exit()
 
-# Send a message to the LB
-message = "GET /count HTTP/1.1"
-print(f"Sending message: {message}")
-sock.sendall(message.encode())
+# Send 5 messages to the LB
+for i in range(5):
+    message = "GET /count HTTP/1.1"
+    print(f"Sending message {i+1}: {message}")
+    sock.sendall(message.encode())
 
-# Receive a response from the LB
-response = sock.recv(1024)
-print(f"Received response: {response.decode()}")
+    # Receive a response from the LB
+    response = sock.recv(1024)
+    print(f"Received response {i+1}: {response.decode()}")
 
-# Close the socket after receiving the first response
+# Close the socket after receiving all responses
 sock.close()
 print("Disconnected.")
