@@ -69,7 +69,7 @@ int send_message(int sockfd, const char* message) {
 
 int write_port_to_file(int number, char* file_name) {
     FILE *fp;
-    fp = fopen(file_name, "a"); // Open file in append mode
+    fp = fopen(file_name, "w"); // Open file in write mode (overwrite existing contents)
     if (fp == NULL) {
         perror("Error opening file");
         return -1;
@@ -78,3 +78,4 @@ int write_port_to_file(int number, char* file_name) {
     fclose(fp); // Close file
     return 0;
 }
+
