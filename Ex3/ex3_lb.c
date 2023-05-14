@@ -11,6 +11,7 @@
 
 #define MAX_NUM_CLIENTS 9
 
+
 void handle_client(int client_sockfd, int* sockfd_servers, int server_port) {
     char client_buffer[BUFFER_SIZE];
     ssize_t recv_size;
@@ -80,7 +81,6 @@ void run_load_balancer(int* sockfd_servers, int sockfd_client, int server_port, 
     }
     close(sockfd_client);
 }
-
 
 
 

@@ -7,6 +7,8 @@
 #include <time.h>
 #include "lb_back_end.h"
 
+
+
 int bind_and_listen(int *sockfd) {
     int port;
     struct sockaddr_in server_addr;
@@ -19,7 +21,7 @@ int bind_and_listen(int *sockfd) {
 
     srand(time(NULL));
     for (int i = 0; i < 10; i++) {
-        port = rand() % (64000 - 1024 + 1) + 1024;
+        port = rand() % (PORT_MAX - PORT_MIN + 1) + PORT_MIN;
         memset(&server_addr, 0, sizeof(server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
