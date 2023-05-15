@@ -7,7 +7,16 @@
 #include <time.h>
 #include "lb_back_end.h"
 
+#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024
+#define PORT_MAX 64000
+#define PORT_MIN 1024
+#define MAX_NUM_CLIENTS 9
+#define NUM_SERVERS 3
 
+
+int send_message(int sockfd, const char* message, int server_num, int* server_counters);
+void handle_client(int client_sockfd, int server_sockfd, int server_num, int* server_counters);
 
 int bind_and_listen(int *sockfd) {
     int port;
