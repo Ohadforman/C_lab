@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7 -tt
+
 import socket
 import subprocess
 import sys
