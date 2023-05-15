@@ -12,7 +12,7 @@
 #define MAX_NUM_CLIENTS 9
 
 
-void handle_client(int client_sockfd, int* sockfd_servers, int server_port) {
+void handle_client(int client_sockfd, int server_sockfd, int server_num) {
     char client_buffer[BUFFER_SIZE];
     ssize_t recv_size;
 
@@ -21,33 +21,27 @@ void handle_client(int client_sockfd, int* sockfd_servers, int server_port) {
         client_buffer[recv_size] = '\0';
         printf("Received message from client: %s\n", client_buffer);
 
-        int i;
-        int server_num = 0; // Keeps track of the server number to send message to
         int server_responded = 0; // Keeps track of whether a server has responded yet
-        for (i = 0; i < 5; i++) {
-            printf("Sending message %d to server %d...\n", i+1, server_num+1);
-            send_message(sockfd_servers[server_num], client_buffer);
 
-            char server_buffer[BUFFER_SIZE];
-            ssize_t recv_size_server;
+        printf("Sending message to server %d...\n", server_num + 1);
+        send_message(server_sockfd, client_buffer);
 
-            // Receive a response from the current server
-            if ((recv_size_server = read(sockfd_servers[server_num], server_buffer, BUFFER_SIZE)) > 0) {
-                server_buffer[recv_size_server] = '\0';
-                printf("Received response from server %d: %s\n", server_num+1, server_buffer);
+        char server_buffer[BUFFER_SIZE];
+        ssize_t recv_size_server;
 
-                // Send the response back to the client
-                send_message(client_sockfd, server_buffer);
-                server_responded = 1; // Mark that a server has responded
-            } else {
-                printf("Error receiving message from server %d.\n", server_num+1);
-            }
+        // Receive a response from the current server
+        if ((recv_size_server = read(server_sockfd, server_buffer, BUFFER_SIZE)) > 0) {
+            server_buffer[recv_size_server] = '\0';
+            printf("Received response from server %d: %s\n", server_num + 1, server_buffer);
 
-            server_num = (server_num + 1) % 3; // Move on to the next server
-            printf("Next server: %d\n", server_num+1);
+            // Send the response back to the client
+            send_message(client_sockfd, server_buffer);
+            server_responded = 1; // Mark that a server has responded
+        } else {
+            printf("Error receiving message from server %d.\n", server_num + 1);
         }
 
-        printf("Loop executed %d times.\n", i);
+        printf("Loop executed 1 time.\n");
 
         if (!server_responded) {
             printf("None of the servers responded.\n");
@@ -59,11 +53,13 @@ void handle_client(int client_sockfd, int* sockfd_servers, int server_port) {
 
 void run_load_balancer(int* sockfd_servers, int sockfd_client, int server_port, int client_port) {
     int num_clients = 0; // Counter for number of clients served
+    int server_num = 0; // Keeps track of the current server
 
     while (1) {
         int client_sockfd = wait_for_connection(sockfd_client);
         printf("Client connected on port %d...\n", client_port);
-        handle_client(client_sockfd, sockfd_servers, server_port);
+        handle_client(client_sockfd, sockfd_servers[server_num], server_num);
+        server_num = (server_num + 1) % 3; // Move on to the next server
         num_clients++;
 
         if (num_clients >= MAX_NUM_CLIENTS) {
@@ -81,6 +77,7 @@ void run_load_balancer(int* sockfd_servers, int sockfd_client, int server_port, 
     }
     close(sockfd_client);
 }
+
 
 
 

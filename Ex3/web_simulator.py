@@ -2,6 +2,8 @@ import socket
 import sys
 import subprocess
 import time
+import socket
+import sys
 
 # Check if the port is provided as a command-line argument
 if len(sys.argv) != 2:
@@ -18,36 +20,25 @@ LB_ADDRESS = 'localhost'
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Keep trying to connect until successful or max retries reached
-max_retries = 10
-retry_count = 0
-while retry_count < max_retries:
-    try:
-        # Connect the socket to the LB's address and port
-        print(f"Connecting to {LB_ADDRESS}:{LB_PORT}... (Attempt {retry_count+1}/{max_retries})")
-        sock.connect((LB_ADDRESS, LB_PORT))
-        print("Connected!")
-        break
-    except (ConnectionRefusedError, OSError) as e:
-        print(f"Failed to connect: {e}")
-        if retry_count < max_retries-1:
-            retry_count += 1
-            time.sleep(1)
-        else:
-            print("Max retries reached. Exiting.")
-            print("Disconnected.")
-            sys.exit()
+try:
+    # Connect the socket to the LB's address and port
+    print(f"Connecting to {LB_ADDRESS}:{LB_PORT}...")
+    sock.connect((LB_ADDRESS, LB_PORT))
+    print("Connected!")
 
-# Send 5 messages to the LB
-for i in range(5):
+    # Send a message to the LB
     message = "GET /count HTTP/1.1"
-    print(f"Sending message {i+1}: {message}")
+    print(f"Sending message: {message}")
     sock.sendall(message.encode())
 
     # Receive a response from the LB
     response = sock.recv(1024)
-    print(f"Received response {i+1}: {response.decode()}")
+    print(f"Received response: {response.decode()}")
 
-# Close the socket after receiving all responses
-sock.close()
-print("Disconnected.")
+except (ConnectionRefusedError, OSError) as e:
+    print(f"Failed to connect: {e}")
+
+finally:
+    # Close the socket
+    sock.close()
+    print("Disconnected.")
