@@ -59,15 +59,7 @@ int wait_for_connection(int sockfd) {
     return client_sockfd;
 }
 
-int send_message(int sockfd, const char* message) {
-    ssize_t send_size = write(sockfd, message, strlen(message));
-    if (send_size < 0) {
-        perror("write");
-        return -1;
-    }
-    printf("Sent message: %s\n", message);
-    return 0;
-}
+
 
 int write_port_to_file(int number, char* file_name) {
     FILE *fp;
@@ -81,3 +73,92 @@ int write_port_to_file(int number, char* file_name) {
     return 0;
 }
 
+
+int send_message(int sockfd, const char* message, int server_num, int* server_counters) {
+    // Create a new message buffer to include the server activation count
+    char new_message[BUFFER_SIZE];
+    snprintf(new_message, BUFFER_SIZE, "%s Server %d Activation Count: %d", message, server_num + 1, server_counters[server_num]);
+
+    ssize_t send_size = write(sockfd, new_message, strlen(new_message));
+    if (send_size < 0) {
+        perror("write");
+        return -1;
+    }
+    printf("Sent message: %s\n", new_message);
+    return 0;
+}
+
+
+void handle_client(int client_sockfd, int server_sockfd, int server_num, int* server_counters) {
+    char client_buffer[BUFFER_SIZE];
+    ssize_t recv_size;
+
+    // Receive a message from the client
+    if ((recv_size = read(client_sockfd, client_buffer, BUFFER_SIZE)) > 0) {
+        client_buffer[recv_size] = '\0';
+        printf("Received message from client: %s\n", client_buffer);
+
+        int server_responded = 0; // Keeps track of whether a server has responded yet
+
+        printf("Sending message to server %d...\n", server_num + 1);
+        send_message(server_sockfd, client_buffer, server_num, server_counters);
+
+        char server_buffer[BUFFER_SIZE];
+        ssize_t recv_size_server;
+
+        // Receive a response from the current server
+        if ((recv_size_server = read(server_sockfd, server_buffer, BUFFER_SIZE)) > 0) {
+            server_buffer[recv_size_server] = '\0';
+            printf("Received response from server %d: %s\n", server_num + 1, server_buffer);
+
+            // Send the response back to the client
+            send_message(client_sockfd, server_buffer, server_num, server_counters);
+
+            server_responded = 1; // Mark that a server has responded
+        } else {
+            printf("Error receiving message from server %d.\n", server_num + 1);
+        }
+
+        printf("Loop executed 1 time.\n");
+
+        if (!server_responded) {
+            printf("None of the servers responded.\n");
+        }
+
+        // Increment the counter for the current server
+        server_counters[server_num]++;
+
+        close(client_sockfd);
+    }
+}
+
+void run_load_balancer(int* sockfd_servers, int sockfd_client, int client_port) {
+    int num_clients = 0; // Counter for number of clients served
+    int server_num = 0; // Keeps track of the current server
+
+    int server_counters[NUM_SERVERS];
+    memset(server_counters, 0, sizeof(server_counters)); // Initialize counters to zero
+
+    while (1) {
+        int client_sockfd = wait_for_connection(sockfd_client);
+        printf("Client connected on port %d...\n", client_port);
+        handle_client(client_sockfd, sockfd_servers[server_num], server_num, server_counters);
+        server_num = (server_num + 1) % NUM_SERVERS; // Move on to the next server
+        num_clients++;
+
+        if (num_clients >= MAX_NUM_CLIENTS) {
+            printf("Maximum number of clients served. Exiting...\n");
+            break;
+        }
+    }
+
+    // Print the server counters
+    int i;
+    for (i = 0; i < NUM_SERVERS; i++) {
+        printf("Server %d was activated %d times.\n", i + 1, server_counters[i]);
+    }
+
+    // Send a message to the servers to close the connection
+
+    close(sockfd_client);
+}
