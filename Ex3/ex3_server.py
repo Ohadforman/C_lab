@@ -79,3 +79,4 @@ while True:
         pass  # no data was received, continue to wait for new messages
     except ConnectionResetError:
         continue  # the connection was reset, continue to wait for new messages
+        
