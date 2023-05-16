@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-OBJS = my_grep.o print_control.o search_logic.o args_parser.o
+OBJS = ex3_lb.o lb_back_end.o  
 HEADERS = lb_back_end.h 
 
 my_grep: $(OBJS)

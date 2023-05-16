@@ -1,44 +1,51 @@
-import socket
 import sys
-import subprocess
+from socket import *
+import random
 import time
-import socket
-import sys
 
-# Check if the port is provided as a command-line argument
-if len(sys.argv) != 2:
-    print("Usage: python3 client.py <port>")
-    sys.exit(1)
+def get_split_point(request):
+    if random.choice([True, False]):
+        return random.randint(-4, -1)
+    return random.randint(0, len(request))
 
-# Get the port number from the command-line argument
-port_command = sys.argv[1]
-LB_PORT = int(subprocess.check_output(port_command, shell=True).decode().strip())
+# Read the port number from the file
+with open("http_port", "r") as file:
+    port = int(file.read().strip())
 
-# Replace this with the IP address of the LB you want to connect to
-LB_ADDRESS = 'localhost'
+request = \
+"""GET /counter HTTP/1.1\r
+Host: nova.cs.tau.ac.il\r
+Connection: keep-alive\r
+Cache-Control: max-age=0\r
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r
+User-Agent: Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36\r
+Accept-Encoding: gzip,deflate,sdch\r
+Accept-Language: en-US,en;q=0.8,he;q=0.6\r\n\r\n"""
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket()
 
-try:
-    # Connect the socket to the LB's address and port
-    print(f"Connecting to {LB_ADDRESS}:{LB_PORT}...")
-    sock.connect((LB_ADDRESS, LB_PORT))
-    print("Connected!")
+s.connect(('localhost', port))
+first_part_len = get_split_point(request)
+s.send(request[:first_part_len])
+time.sleep(0.1)
+s.send(request[first_part_len:])
 
-    # Send a message to the LB
-    message = "GET /count HTTP/1.1"
-    print(f"Sending message: {message}")
-    sock.sendall(message.encode())
+response = ''
+while 1:
+    response += s.recv(1024)
+    if response.count('\r\n\r\n') == 2:
+        break
 
-    # Receive a response from the LB
-    response = sock.recv(1024)
-    print(f"Received response: {response.decode()}")
+lines = response.split('\r\n')
+assert len(lines) == 7
+assert lines[0] == 'HTTP/1.0 200 OK'
+assert lines[1] == 'Content-Type: text/html'
+assert lines[2].startswith('Content-Length: ')
+content_length = int(lines[2][len("Content-Length: "):])
+assert lines[3] == ''
 
-except (ConnectionRefusedError, OSError) as e:
-    print(f"Failed to connect: {e}")
+assert len(lines[4]) == content_length
+content = lines[4]
+assert lines[-2:] == ['', '']
 
-finally:
-    # Close the socket
-    sock.close()
-    print("Disconnected.")
+print(content)
