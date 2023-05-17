@@ -1,17 +1,20 @@
+#!/usr/bin/python2.7 -tt
+
 import socket
+import os
 import sys
 import time
-import os
 
 count = 0
 
 if len(sys.argv) != 2:
-    print("Usage: python3 server.py 'cat server_port'")
+    print "Usage: python server.py 'cat server_port'"
     sys.exit(1)
 
 # Get the port number from the command "cat server_port"
 port_command = sys.argv[1]
 port_output = os.popen(port_command).read().strip()
+print "port_output: %s" % port_output
 LB_PORT = int(port_output)
 
 # Replace this with the IP address of the LB you want to connect to
@@ -21,9 +24,9 @@ LB_ADDRESS = 'localhost'
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the LB's address and port
-print(f"Connecting to {LB_ADDRESS}:{LB_PORT}...")
+print "Connecting to %s:%d..." % (LB_ADDRESS, LB_PORT)
 sock.connect((LB_ADDRESS, LB_PORT))
-print("Connected!")
+print "Connected!"
 
 # Set a timeout value for the socket
 sock.settimeout(1)  # Set timeout to 1 second
@@ -46,13 +49,13 @@ while True:
             message_str = message.decode('utf-8', errors='ignore')
         except UnicodeDecodeError:
             continue  # Skip this message if decoding fails
-        print(f"Received message: {message_str}")
+        print "Received message: %s" % message_str
 
         if "Closing connection" in message_str:
             # Close the socket
-            print("Closing connection due to max number of clients reached.")
+            print "Closing connection due to max number of clients reached."
             sock.close()
-            print("Disconnected.")
+            print "Disconnected."
             break
 
         if "GET /counter" in message_str:
@@ -60,7 +63,7 @@ while True:
             count += 1
 
             # Send an HTTP response with the current count
-            response_str = f"HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: {len(str(count))}\r\n\r\n{count}\r\n\r\n"
+            response_str = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%d\r\n\r\n" % (len(str(count)), count)
         else:
             # Send a 404 response
             response_str = "HTTP/1.1 404 Not Found\r\nContent-type: text/html\r\nContent-length: 113\r\n\r\n"
@@ -75,8 +78,8 @@ while True:
             chunk = response_str[start_index:end_index]
 
             # Send the chunk to the LB
-            sock.sendall(chunk.encode())
-            print(f"Sent chunk: {chunk}")
+            sock.sendall(chunk)
+            print "Sent chunk: %s" % chunk
 
             # Wait for the specified delay between chunks
             time.sleep(DELAY)
@@ -85,5 +88,9 @@ while True:
 
     except socket.timeout:
         pass  # no data was received, continue to wait for new messages
-    except ConnectionResetError:
-        continue  # the connection was reset, continue to wait for new messages
+    except socket.error as e:
+        if e.errno == socket.errno.ECONNRESET:
+            continue  # the connection was reset, continue to wait for new messages
+        else:
+            print "Socket error:", e
+            break
