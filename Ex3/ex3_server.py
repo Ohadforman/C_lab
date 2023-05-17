@@ -1,7 +1,7 @@
 import socket
-import subprocess
 import sys
 import time
+import os
 
 count = 0
 
@@ -11,7 +11,8 @@ if len(sys.argv) != 2:
 
 # Get the port number from the command "cat server_port"
 port_command = sys.argv[1]
-LB_PORT = int(subprocess.check_output(port_command, shell=True).decode().strip())
+port_output = os.popen(port_command).read().strip()
+LB_PORT = int(port_output)
 
 # Replace this with the IP address of the LB you want to connect to
 LB_ADDRESS = 'localhost'
@@ -54,11 +55,18 @@ while True:
             print("Disconnected.")
             break
 
-        # Update the count
-        count += 1
+        if "GET /counter" in message_str:
+            # Update the count
+            count += 1
 
-        # Send an HTTP response with the current count
-        response_str = f"HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: {len(str(count))}\r\n\r\n{count}\r\n\r\n"
+            # Send an HTTP response with the current count
+            response_str = f"HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: {len(str(count))}\r\n\r\n{count}\r\n\r\n"
+        else:
+            # Send a 404 response
+            response_str = "HTTP/1.1 404 Not Found\r\nContent-type: text/html\r\nContent-length: 113\r\n\r\n"
+            response_str += "<html><head><title>Not Found</title></head><body>\r\n"
+            response_str += "Sorry, the object you requested was not found.\r\n"
+            response_str += "</body></html>\r\n\r\n"
 
         # Send the response back to the LB in chunks
         start_index = 0
@@ -79,4 +87,3 @@ while True:
         pass  # no data was received, continue to wait for new messages
     except ConnectionResetError:
         continue  # the connection was reset, continue to wait for new messages
-        

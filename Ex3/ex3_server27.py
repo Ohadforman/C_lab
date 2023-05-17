@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7 -tt
+#ln -s ex3_server27.py ex3_server
 import socket
-import subprocess
+import os
 import sys
 import time
 
@@ -12,7 +13,9 @@ if len(sys.argv) != 2:
 
 # Get the port number from the command "cat server_port"
 port_command = sys.argv[1]
-LB_PORT = int(subprocess.check_output(port_command, shell=True).decode().strip())
+port_output = os.popen(port_command).read().strip()
+print "port_output: %s" % port_output
+LB_PORT = int(port_output)
 
 # Replace this with the IP address of the LB you want to connect to
 LB_ADDRESS = 'localhost'
@@ -21,7 +24,7 @@ LB_ADDRESS = 'localhost'
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the LB's address and port
-print "Connecting to {}:{}".format(LB_ADDRESS, LB_PORT)
+print "Connecting to %s:%d..." % (LB_ADDRESS, LB_PORT)
 sock.connect((LB_ADDRESS, LB_PORT))
 print "Connected!"
 
@@ -46,7 +49,7 @@ while True:
             message_str = message.decode('utf-8', errors='ignore')
         except UnicodeDecodeError:
             continue  # Skip this message if decoding fails
-        print "Received message: {}".format(message_str)
+        print "Received message: %s" % message_str
 
         if "Closing connection" in message_str:
             # Close the socket
@@ -55,11 +58,18 @@ while True:
             print "Disconnected."
             break
 
-        # Update the count
-        count += 1
+        if "GET /counter" in message_str:
+            # Update the count
+            count += 1
 
-        # Send an HTTP response with the current count
-        response_str = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\n\r\n{}\r\n\r\n".format(len(str(count)), count)
+            # Send an HTTP response with the current count
+            response_str = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%d\r\n\r\n" % (len(str(count)), count)
+        else:
+            # Send a 404 response
+            response_str = "HTTP/1.1 404 Not Found\r\nContent-type: text/html\r\nContent-length: 113\r\n\r\n"
+            response_str += "<html><head><title>Not Found</title></head><body>\r\n"
+            response_str += "Sorry, the object you requested was not found.\r\n"
+            response_str += "</body></html>\r\n\r\n"
 
         # Send the response back to the LB in chunks
         start_index = 0
@@ -68,8 +78,8 @@ while True:
             chunk = response_str[start_index:end_index]
 
             # Send the chunk to the LB
-            sock.sendall(chunk.encode())
-            print "Sent chunk: {}".format(chunk)
+            sock.sendall(chunk)
+            print "Sent chunk: %s" % chunk
 
             # Wait for the specified delay between chunks
             time.sleep(DELAY)
@@ -79,8 +89,8 @@ while True:
     except socket.timeout:
         pass  # no data was received, continue to wait for new messages
     except socket.error as e:
-        if e.errno == 104:
-            # Connection reset by peer, continue to wait for new messages
-            continue
+        if e.errno == socket.errno.ECONNRESET:
+            continue  # the connection was reset, continue to wait for new messages
         else:
-            raise e
+            print "Socket error:", e
+            break

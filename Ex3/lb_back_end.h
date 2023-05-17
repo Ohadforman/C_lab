@@ -2,7 +2,7 @@
 #define LB_BACK_END_H
 
 
-
+#define NUM_SERVERS 3
 int bind_and_listen(int *sockfd);
 int wait_for_connection(int sockfd);
 
