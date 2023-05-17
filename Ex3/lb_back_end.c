@@ -44,7 +44,7 @@ int bind_and_listen(int* sockfd)
     server_addr.sin_port = htons(port);
 
     if (bind(*sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
-      printf("Listening on port %d...\n", port);
+      //printf("Listening on port %d...\n", port);
       if (listen(*sockfd, TRY_CONNECT) == 0) {
         return port;
       } else {
@@ -62,14 +62,14 @@ int wait_for_connection(int sockfd)
   struct sockaddr_in client_addr;
   socklen_t client_addr_len = sizeof(client_addr);
 
-  printf("Waiting for incoming connections...\n");
+  //printf("Waiting for incoming connections...\n");
 
   if ((client_sockfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0) {
     perror("accept");
     return -1;
   }
 
-  printf("Connection accepted from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+  //printf("Connection accepted from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
   return client_sockfd;
 }
@@ -78,17 +78,11 @@ int write_port_to_file(int number, char* file_name) {
     FILE* fp;
     fp = fopen(file_name, "w");
     if (fp == NULL) {
-        perror("Error opening file");
+        //perror("Error opening file");
         return -1;
     }
     fprintf(fp, "%d", number);
     fclose(fp);
-    
-    // Set the file permission to 755
-    if (chmod(file_name, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0) {
-        perror("Error setting file permission");
-        return -1;
-    }
     
     return 0;
 }
@@ -106,7 +100,7 @@ void send_response_chunked(int client_sockfd, const char* response, int response
             return;
         }
         total_sent_bytes += send_size;
-        printf("Sent chunk to client: %ld bytes\n", send_size);
+        //printf("Sent chunk to client: %ld bytes\n", send_size);
         sleep(1);  // Sleep for 1 second between chunks
     }
 
@@ -117,7 +111,7 @@ void send_response_chunked(int client_sockfd, const char* response, int response
             perror("write");
             return;
         }
-        printf("Sent remaining bytes to client: %ld bytes\n", send_size);
+        //printf("Sent remaining bytes to client: %ld bytes\n", send_size);
     }
 }
 
@@ -132,13 +126,13 @@ int send_message(int sockfd, const char* message, int server_num, int* server_co
         perror("write");
         return -1;
     }
-    printf("Sent message: %s\n", new_message);
+    //printf("Sent message: %s\n", new_message);
     return 0;
 }
 
 void process_received_chunk(char* client_buffer, ssize_t recv_size, ssize_t* total_recv_size, int* num_chunks_received) {
     *total_recv_size += recv_size;
-    printf("Received message chunk from client: %.*s\n", (int)recv_size, client_buffer + *total_recv_size - recv_size);
+    //printf("Received message chunk from client: %.*s\n", (int)recv_size, client_buffer + *total_recv_size - recv_size);
 
     // Example: Check if the end of the request has been reached
     if (strstr(client_buffer, "\r\n\r\n") != NULL) {
@@ -146,7 +140,7 @@ void process_received_chunk(char* client_buffer, ssize_t recv_size, ssize_t* tot
         char* second_occurrence = strstr(client_buffer + *total_recv_size - recv_size, "\r\n\r\n");
         if (second_occurrence != NULL) {
             *num_chunks_received = 2;
-            printf("Received complete request from client (size: %ld)\n", *total_recv_size);
+            //printf("Received complete request from client (size: %ld)\n", *total_recv_size);
         }
     }
 }
@@ -157,7 +151,7 @@ void forward_request_to_server(int client_sockfd, int server_sockfd, char* clien
         perror("write");
         return;
     }
-    printf("Sent request to server %d\n", server_num + 1);
+    //printf("Sent request to server %d\n", server_num + 1);
 
     // Receive the response from the server
     char server_buffer[BUFFER_SIZE];
@@ -173,7 +167,7 @@ void forward_request_to_server(int client_sockfd, int server_sockfd, char* clien
         perror("write");
         return;
     }
-    printf("Sent response to client\n");
+    //printf("Sent response to client\n");
 
     // Increment the counter for the current server
     server_counters[server_num]++;
@@ -193,7 +187,7 @@ void handle_client(int client_sockfd, int server_sockfd, int server_num, int* se
             return;
         } else if (recv_size == 0) {
             // No more data to read, end of data
-            printf("Received empty message from client\n");
+            //printf("Received empty message from client\n");
             return;
         }
 
@@ -209,8 +203,22 @@ void handle_client(int client_sockfd, int server_sockfd, int server_num, int* se
 
 
 
-void run_load_balancer(int* sockfd_servers, int sockfd_client, int client_port)
-{
+void send_closing_message(int* sockfd_servers) {
+  const char* closing_message = "Closing connection due to max number of clients reached.";
+
+  // Send the closing message to all servers
+  for (int i = 0; i < NUM_SERVERS; i++) {
+    ssize_t send_size = write(sockfd_servers[i], closing_message, strlen(closing_message));
+    if (send_size < 0) {
+      perror("write");
+      continue;
+    }
+    //printf("Sent closing message to server %d\n", i + 1);
+    close(sockfd_servers[i]);  // Close the server connection
+  }
+}
+
+void run_load_balancer(int* sockfd_servers, int sockfd_client, int client_port) {
   int num_clients = 0;  // Counter for number of clients served
   int server_num = 0;   // Keeps track of the current server
 
@@ -219,28 +227,18 @@ void run_load_balancer(int* sockfd_servers, int sockfd_client, int client_port)
 
   while (1) {
     int client_sockfd = wait_for_connection(sockfd_client);
-    printf("Client connected on port %d...\n", client_port);
+    //printf("Client connected on port %d...\n", client_port);
     handle_client(client_sockfd, sockfd_servers[server_num], server_num, server_counters);
     server_num = (server_num + 1) % NUM_SERVERS;  // Move on to the next server
     num_clients++;
 
     if (num_clients >= MAX_NUM_CLIENTS) {
-      printf("Closing connection Maximum number of clients served. Sending closing message to servers...\n");
-      const char* closing_message = "Closing connection due to max number of clients reached.";
-
-      // Send the closing message to all servers
-      for (int i = 0; i < NUM_SERVERS; i++) {
-        ssize_t send_size = write(sockfd_servers[i], closing_message, strlen(closing_message));
-        if (send_size < 0) {
-          perror("write");
-          continue;
-        }
-        printf("Sent closing message to server %d\n", i + 1);
-        close(sockfd_servers[i]);  // Close the server connection
-      }
+      //printf("Closing connection. Maximum number of clients served. Sending closing message to servers...\n");
+      send_closing_message(sockfd_servers);
       break;
     }
   }
   
   close(sockfd_client);
 }
+
