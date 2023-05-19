@@ -14,23 +14,18 @@ int main()
   int sockfd_server, sockfd_client;
   int server_port, client_port;
   int sockfd_servers[NUM_SERVERS];
-
-  // Creates the sockets to listen for the server and client
-  // Returns the assigned port
   server_port = bind_and_listen(&sockfd_server);
   client_port = bind_and_listen(&sockfd_client);
 
-  // Save the assigned ports to files
+  // Save the ports to files
   write_port_to_file(server_port, "server_port");
   write_port_to_file(client_port, "http_port");
 
-  // Waits and accepts incoming connections
-  // Returns the servers socket
   sockfd_servers[0] = wait_for_connection(sockfd_server);
   sockfd_servers[1] = wait_for_connection(sockfd_server);
   sockfd_servers[2] = wait_for_connection(sockfd_server);
 
-  run_load_balancer(sockfd_servers, sockfd_client);
+  run_load_balancer(sockfd_servers, sockfd_client, client_port);
 
   return 0;
 }
