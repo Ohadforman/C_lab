@@ -1,0 +1,26 @@
+<HTML>
+<HEAD>
+<TITLE>Yuval Shavitt (Advanced Lab in C)</TITLE>
+</HEAD>
+<body>
+    <h1>Advanced Laboratory in C - 2013</h1>
+<ul>
+	<li> <a href="C-intro.pdf">Revisiting C</a> 
+	<li> <a href="Modularity.docx">Modularity</a> 
+	<li> <a href="FileIO.pdf">I/O and files in C</a> 
+	<li> <a href="IPC.pdf">Inter Process Communication (Sockets)</a> 
+
+</ul>
+
+  <hr>
+
+
+<!--
+<h2>Home exercises</h2>
+
+<hr>
+-->
+str17str2
+str1astr1
+...aaa
+
