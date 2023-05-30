@@ -1,4 +1,0 @@
-arg2commang - used to parse the command line *arguments*
-print_control - holds the line *printing* logic
-search_logic - has the functions to iterate over the input and *search* for matches
-my_grep - main module that uses the other modules to implement *grep*
