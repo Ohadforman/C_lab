@@ -169,15 +169,14 @@ class Parallelogram extends Shape {
     this.y2 = y2;
     this.x3 = x3;
     this.y3 = y3;
-    this.x4 = Math.abs(x3 - x1) + x2;
-    this.y4 = Math.abs(y3 - y1) + y2;
+    this.x4 = x2 + (x3 - x1);
+    this.y4 = y2 + (y3 - y1);
   }
 
   @Override
   public double getArea() {
-    double base = Math.abs(x3 - x1);
-    double height = Math.abs(y3 - y1);
-    return base * height;
+    Triangle triangle = new Triangle(0, "", x1, y1, x2, y2, x4, y4);
+    return 2 * triangle.getArea();
   }
 
   @Override
@@ -362,6 +361,7 @@ class Triangle extends Shape {
 
 public class ToyCAD {
   private List<Shape> drawing;
+  private int id = 0;
 
   public ToyCAD() {
     drawing = new ArrayList<>();
@@ -423,7 +423,6 @@ public class ToyCAD {
     String color = parts[2].toUpperCase();
 
     Shape shape = null;
-    int id = drawing.size();
 
     if (shapeType.equals("circle")) {
       double x = Double.parseDouble(parts[3]);
@@ -477,6 +476,7 @@ public class ToyCAD {
     }
 
     if (shape != null) {
+      id += 1;
       drawing.add(shape);
       System.out.println(shape.id);
       return shape.id;

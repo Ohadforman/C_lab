@@ -1,0 +1,24 @@
+new Circle blue 0 0 1
+area blue
+area red
+new Ellipse red 10 0.3 10 -0.3 1
+area red
+color red 0
+area red
+delete 1
+area red
+new Parallelogram YELLOW 0 0 1 1 8 1
+area yellow
+circumference yellow
+new Rectangle green -7.43 2 -6.12 3.17
+area green
+move 2 0 1.12
+area green
+new Square GREEN 0 0 5
+area green
+circumference green
+delete 0
+new Triangle BLUE 0 0 1 1 1 -1
+area BLUE
+circumference BLUE
+exit
