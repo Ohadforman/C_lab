@@ -21,4 +21,8 @@ delete 0
 new Triangle BLUE 0 0 1 1 1 -1
 area BLUE
 circumference BLUE
+new Square RED 0 0 5
+area red
+copy 6 -8.1 9.14
+area red
 exit

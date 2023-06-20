@@ -70,7 +70,9 @@ class Circle extends Shape {
 
   @Override
   public String[] getInputs() {
-    return new String[] {color, String.valueOf(x), String.valueOf(y), String.valueOf(radius)};
+    return new String[] {
+      "new", "circle", color, String.valueOf(x), String.valueOf(y), String.valueOf(radius)
+    };
   }
 }
 
@@ -139,6 +141,8 @@ class Ellipse extends Shape {
   @Override
   public String[] getInputs() {
     return new String[] {
+      "new",
+      "Ellipse",
       color,
       String.valueOf(x1),
       String.valueOf(y1),
@@ -206,6 +210,8 @@ class Parallelogram extends Shape {
   @Override
   public String[] getInputs() {
     return new String[] {
+      "new",
+      "Parallelogram",
       color,
       String.valueOf(x1),
       String.valueOf(y1),
@@ -268,7 +274,13 @@ class Rectangle extends Shape {
   @Override
   public String[] getInputs() {
     return new String[] {
-      color, String.valueOf(x1), String.valueOf(y1), String.valueOf(x2), String.valueOf(y2)
+      "new",
+      "Rectangle",
+      color,
+      String.valueOf(x1),
+      String.valueOf(y1),
+      String.valueOf(x2),
+      String.valueOf(y2)
     };
   }
 }
@@ -348,6 +360,8 @@ class Triangle extends Shape {
   @Override
   public String[] getInputs() {
     return new String[] {
+      "new",
+      "Triangle",
       color,
       String.valueOf(x1),
       String.valueOf(y1),
