@@ -1,0 +1,88 @@
+#!/usr/bin/python2.7 -tt
+
+import socket 
+import sys
+
+chunk_size = 1024
+double_crlf = "\r\n\r\n"
+http_line_seperator = "\r\n"
+
+def receive_http_request(server_socket):
+    request = ""
+    while True:
+        request += server_socket.recv(chunk_size)
+
+        if request.endswith(double_crlf):
+            return request
+
+def send_http_response(server_socket, response):
+    response_encoded = response.encode()
+    bytes_sent = 0
+    while bytes_sent < len(response_encoded):
+        bytes_sent += server_socket.send(response_encoded[bytes_sent:])
+
+def create_404_response():
+    response_str = "HTTP/1.1 404 Not Found"
+    response_str += http_line_seperator
+    response_str += "Content-type: text/html"
+    response_str += http_line_seperator
+    response_str += "Content-length: 113"
+    response_str += http_line_seperator
+    response_str += http_line_seperator
+    response_str += "<html><head><title>Not Found</title></head><body>"
+    response_str += http_line_seperator
+    response_str += "Sorry, the object you requested was not found."
+    response_str += http_line_seperator
+    response_str += "</body></html>"
+    response_str += http_line_seperator
+    response_str += http_line_seperator
+
+    return response_str
+
+def create_count_response(num_of_requests):
+    num_of_requests_str = str(num_of_requests)
+    response_str = "HTTP/1.0 200 OK"
+    response_str += http_line_seperator
+    response_str += "Content-Type: text/html"
+    response_str += http_line_seperator
+    response_str += "Content-Length: " + str(len(num_of_requests_str))
+    response_str += http_line_seperator
+    response_str += http_line_seperator
+    response_str += num_of_requests_str
+    response_str += http_line_seperator
+    response_str += http_line_seperator
+    
+    return response_str
+
+def hanle_request(request, num_of_requests):
+    first_line = request.split(http_line_seperator)[0]
+    first_line_split = first_line.split(' ')
+    if (first_line_split[0] == "GET") and (first_line_split[1] == "/counter"):
+        return create_count_response(num_of_requests), True
+    else:
+        return create_404_response(), False
+
+def setup_server():
+    # Check for correct number of arguments
+    if len(sys.argv) != 2:
+        sys.exit(1)
+
+    port_num = int(sys.argv[1])
+    ip = 'localhost'
+
+    sock = socket.socket()
+    sock.connect((ip, port_num))
+
+    num_of_requests = 1
+    while True:
+        request = receive_http_request(sock)
+        print(request)
+        print("\n\n\n")
+        response, valid_request = hanle_request(request, num_of_requests)
+        if valid_request:
+            num_of_requests += 1
+        print(response)
+        send_http_response(sock, response)
+
+if __name__ == "__main__":
+    setup_server()
