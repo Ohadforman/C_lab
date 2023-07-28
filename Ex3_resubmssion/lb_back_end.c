@@ -12,6 +12,7 @@
 #define PORT_MAX 64000
 #define PORT_MIN 1024
 #define MAX_BUFFER_SIZE 10240
+#define DOUBLE_CRLF "\r\n\r\n"
 #define DOUBLE_CRLF_LEN 4
 
 int bind_and_listen(int* sockfd)
@@ -74,92 +75,67 @@ int wait_for_connection(int sockfd)
   return client_sockfd;
 }
 
-void forward_request_to_server(int server_sockfd, char* client_buffer, ssize_t request_length)
+void send_data_to_socket(int sockfd, char* buffer, int buffer_length)
 {
-  ssize_t send_size = write(server_sockfd, client_buffer, request_length);
-  if (send_size < 0) {
-    perror("write");
-    return;
+  int bytes_sent = 0;
+  int total_bytes_sent = 0;
+
+  while (total_bytes_sent < buffer_length) {
+    bytes_sent = send(sockfd, buffer + total_bytes_sent, buffer_length - total_bytes_sent, 0);
+    if (bytes_sent < 0) {
+      perror("send");
+      return;
+    }
+    total_bytes_sent += bytes_sent;
   }
 }
 
-void get_and_forward_server_response(int server_sockfd, int client_sockfd)
+int count_double_crlf(char* buffer)
 {
-  char recv_buffer[MAX_BUFFER_SIZE];
-  char send_buffer[MAX_BUFFER_SIZE];
-  ssize_t bytes_received;
-  ssize_t bytes_sent;
-  int response_length;
-  char* first_occurrence;
-  char* second_occurrence;
-
-  // Receive the response from the server
-  bytes_received = read(server_sockfd, recv_buffer, MAX_BUFFER_SIZE);
-  if (bytes_received < 0) {
-    perror("read");
-    return;
+  int count = 0;
+  char* tmp = buffer;
+  while ((tmp = strstr(tmp, DOUBLE_CRLF))) {
+    count++;
+    tmp += DOUBLE_CRLF_LEN;
   }
 
-  // Null-terminate the received data to treat it as a string
-  recv_buffer[bytes_received] = '\0';
+  return count;
+}
 
-  // Handle response
-  first_occurrence = strstr(recv_buffer, "\r\n\r\n");
-  if (first_occurrence != NULL) {
-    second_occurrence = strstr(first_occurrence + DOUBLE_CRLF_LEN, "\r\n\r\n");
-    if (second_occurrence != NULL) {
-      // The response is complete, extract the HTTP response part
-      response_length = second_occurrence - recv_buffer + DOUBLE_CRLF_LEN;  // Include the final \r\n\r\n
-      strncpy(send_buffer, recv_buffer, response_length);
-      send_buffer[response_length] = '\0';
+int recieve_data_on_socket(int sockfd, char* buffer, int num_of_http_sep)
+{
+  int bytes_received = 0;
+  int total_bytes_read = 0;
+  int double_crlf_count;
 
-      // Forward the response to the client
-      bytes_sent = write(client_sockfd, send_buffer, response_length);
-      if (bytes_sent < 0) {
-        perror("write");
-        return;
-      }
+  while (true) {
+    bytes_received = recv(sockfd, buffer + total_bytes_read, MAX_BUFFER_SIZE - total_bytes_read, 0);
+    total_bytes_read += bytes_received;
+    double_crlf_count = count_double_crlf(buffer);
+    if (double_crlf_count == num_of_http_sep) {
+      break;
     }
   }
+  return total_bytes_read;
 }
 
 void handle_client(int client_sockfd, int server_sockfd)
 {
-  char recv_buffer[MAX_BUFFER_SIZE];
-  char send_buffer[MAX_BUFFER_SIZE];
-  int bytes_received;
-  char* end_of_http_request;
+  char request_buffer[MAX_BUFFER_SIZE];
+  char response_buffer[MAX_BUFFER_SIZE];
   int request_length;
+  int response_length;
 
-  while (true) {
-    // Receive data from the client
-    bytes_received = recv(client_sockfd, recv_buffer, sizeof(recv_buffer) - 1, 0);
-    if (bytes_received <= 0) {
-      perror("Client disconnected or error occurred");
-      break;
-    }
+  request_length = recieve_data_on_socket(client_sockfd, request_buffer, 1);
+  send_data_to_socket(server_sockfd, request_buffer, request_length);
 
-    // Null-terminate the received data to treat it as a string
-    recv_buffer[bytes_received] = '\0';
-
-    // Find the end of the HTTP request (the double CRLF: \r\n\r\n)
-    end_of_http_request = strstr(recv_buffer, "\r\n\r\n");
-    if (end_of_http_request != NULL) {
-      // The request is complete, extract the HTTP request part
-      request_length = end_of_http_request - recv_buffer + DOUBLE_CRLF_LEN;  // Include the final \r\n\r\n
-      strncpy(send_buffer, recv_buffer, request_length);
-      send_buffer[request_length] = '\0';
-
-      forward_request_to_server(server_sockfd, send_buffer, request_length);
-      get_and_forward_server_response(server_sockfd, client_sockfd);
-    }
-  }
+  response_length = recieve_data_on_socket(server_sockfd, response_buffer, 2);
+  send_data_to_socket(client_sockfd, response_buffer, response_length);
 }
 
 void run_load_balancer(int* sockfd_servers, int sockfd_client)
 {
   int server_num = 0;  // Keeps track of the current server
-
   while (true) {
     int client_sockfd = wait_for_connection(sockfd_client);
 

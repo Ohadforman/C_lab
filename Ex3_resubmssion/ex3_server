@@ -76,12 +76,9 @@ def setup_server():
     num_of_requests = 1
     while True:
         request = receive_http_request(sock)
-        print(request)
-        print("\n\n\n")
         response, valid_request = hanle_request(request, num_of_requests)
         if valid_request:
             num_of_requests += 1
-        print(response)
         send_http_response(sock, response)
 
 if __name__ == "__main__":
