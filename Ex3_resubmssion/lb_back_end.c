@@ -11,7 +11,7 @@
 #define LOCAL_HOST "127.0.0.1"
 #define PORT_MAX 64000
 #define PORT_MIN 1024
-#define MAX_BUFFER_SIZE 10240
+#define CHUNK_SIZE 1024
 #define DOUBLE_CRLF "\r\n\r\n"
 #define DOUBLE_CRLF_LEN 4
 
@@ -75,13 +75,13 @@ int wait_for_connection(int sockfd)
   return client_sockfd;
 }
 
-void send_data_to_socket(int sockfd, char* buffer, int buffer_length)
+void send_data_to_socket(int sockfd, char** buffer, int buffer_length)
 {
   int bytes_sent = 0;
   int total_bytes_sent = 0;
 
   while (total_bytes_sent < buffer_length) {
-    bytes_sent = send(sockfd, buffer + total_bytes_sent, buffer_length - total_bytes_sent, 0);
+    bytes_sent = send(sockfd, *buffer + total_bytes_sent, buffer_length - total_bytes_sent, 0);
     if (bytes_sent < 0) {
       perror("send");
       return;
@@ -102,16 +102,27 @@ int count_double_crlf(char* buffer)
   return count;
 }
 
-int recieve_data_on_socket(int sockfd, char* buffer, int num_of_http_sep)
+int recieve_data_on_socket(int sockfd, char** buffer, int num_of_http_sep)
 {
   int bytes_received = 0;
   int total_bytes_read = 0;
   int double_crlf_count = 0;
+  int buffer_size = CHUNK_SIZE;
 
   while (true) {
-    bytes_received = recv(sockfd, buffer + total_bytes_read, MAX_BUFFER_SIZE - total_bytes_read, 0);
+    if (buffer_size == total_bytes_read) {
+      *buffer = (char*)realloc(*buffer, buffer_size * 2 * sizeof(char));
+      if (*buffer == NULL) {
+        perror("Memory allocation failed.\n");
+        return -1;
+      }
+      memset(*buffer + buffer_size, 0, buffer_size * sizeof(char));
+      buffer_size *= 2;
+    }
+
+    bytes_received = recv(sockfd, *buffer + total_bytes_read, buffer_size - total_bytes_read, 0);
     total_bytes_read += bytes_received;
-    double_crlf_count = count_double_crlf(buffer);
+    double_crlf_count = count_double_crlf(*buffer);
     if (double_crlf_count == num_of_http_sep) {
       break;
     }
@@ -121,19 +132,30 @@ int recieve_data_on_socket(int sockfd, char* buffer, int num_of_http_sep)
 
 void handle_client(int client_sockfd, int server_sockfd)
 {
-  char request_buffer[MAX_BUFFER_SIZE];
-  char response_buffer[MAX_BUFFER_SIZE];
-  int request_length;
-  int response_length;
+  int message_length;
+  char* request_buffer = (char*)malloc(CHUNK_SIZE * sizeof(char));
+  char* response_buffer = (char*)malloc(CHUNK_SIZE * sizeof(char));
 
-  memset(request_buffer, 0, sizeof(request_buffer));
-  memset(response_buffer, 0, sizeof(response_buffer));
+  // Check that malloc worked
+  if (request_buffer == NULL || response_buffer == NULL) {
+    perror("Memory allocation failed.\n");
+    return;
+  }
 
-  request_length = recieve_data_on_socket(client_sockfd, request_buffer, 1);
-  send_data_to_socket(server_sockfd, request_buffer, request_length);
+  // Initialize the memory to zero using memset
+  memset(request_buffer, 0, CHUNK_SIZE * sizeof(char));
+  memset(response_buffer, 0, CHUNK_SIZE * sizeof(char));
 
-  response_length = recieve_data_on_socket(server_sockfd, response_buffer, 2);
-  send_data_to_socket(client_sockfd, response_buffer, response_length);
+  // Forward client's request to given server
+  message_length = recieve_data_on_socket(client_sockfd, &request_buffer, 1);
+  send_data_to_socket(server_sockfd, &request_buffer, message_length);
+
+  // Forward server's response to client
+  message_length = recieve_data_on_socket(server_sockfd, &response_buffer, 2);
+  send_data_to_socket(client_sockfd, &response_buffer, message_length);
+
+  free(request_buffer);
+  free(response_buffer);
 }
 
 void run_load_balancer(int* sockfd_servers, int sockfd_client)
