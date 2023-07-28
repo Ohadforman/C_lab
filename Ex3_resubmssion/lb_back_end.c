@@ -106,7 +106,7 @@ int recieve_data_on_socket(int sockfd, char* buffer, int num_of_http_sep)
 {
   int bytes_received = 0;
   int total_bytes_read = 0;
-  int double_crlf_count;
+  int double_crlf_count = 0;
 
   while (true) {
     bytes_received = recv(sockfd, buffer + total_bytes_read, MAX_BUFFER_SIZE - total_bytes_read, 0);
@@ -125,6 +125,9 @@ void handle_client(int client_sockfd, int server_sockfd)
   char response_buffer[MAX_BUFFER_SIZE];
   int request_length;
   int response_length;
+
+  memset(request_buffer, 0, sizeof(request_buffer));
+  memset(response_buffer, 0, sizeof(response_buffer));
 
   request_length = recieve_data_on_socket(client_sockfd, request_buffer, 1);
   send_data_to_socket(server_sockfd, request_buffer, request_length);

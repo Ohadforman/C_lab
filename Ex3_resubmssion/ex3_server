@@ -54,7 +54,7 @@ def create_count_response(num_of_requests):
     
     return response_str
 
-def hanle_request(request, num_of_requests):
+def handle_request(request, num_of_requests):
     first_line = request.split(http_line_seperator)[0]
     first_line_split = first_line.split(' ')
     if (first_line_split[0] == "GET") and (first_line_split[1] == "/counter"):
@@ -76,7 +76,7 @@ def setup_server():
     num_of_requests = 1
     while True:
         request = receive_http_request(sock)
-        response, valid_request = hanle_request(request, num_of_requests)
+        response, valid_request = handle_request(request, num_of_requests)
         if valid_request:
             num_of_requests += 1
         send_http_response(sock, response)
