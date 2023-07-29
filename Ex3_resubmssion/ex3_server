@@ -15,12 +15,6 @@ def receive_http_request(server_socket):
         if request.endswith(double_crlf):
             return request
 
-def send_http_response(server_socket, response):
-    response_encoded = response.encode()
-    bytes_sent = 0
-    while bytes_sent < len(response_encoded):
-        bytes_sent += server_socket.send(response_encoded[bytes_sent:])
-
 def create_404_response():
     response_str = "HTTP/1.1 404 Not Found"
     response_str += http_line_seperator
@@ -79,7 +73,7 @@ def setup_server():
         response, valid_request = handle_request(request, num_of_requests)
         if valid_request:
             num_of_requests += 1
-        send_http_response(sock, response)
+        sock.sendall(response)
 
 if __name__ == "__main__":
     setup_server()
