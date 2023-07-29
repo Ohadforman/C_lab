@@ -112,7 +112,7 @@ int recieve_data_on_socket(int sockfd, char** buffer, int num_of_http_sep)
 
   while (true) {
     if (buffer_size == total_bytes_read) {
-      *buffer = (char*)realloc(*buffer, buffer_size * 2 * sizeof(char));
+      *buffer = (char*)realloc(*buffer, buffer_size * BUFFER_RESIZE_RATIO * sizeof(char));
       if (*buffer == NULL) {
         perror("Memory allocation failed.\n");
         return -1;
