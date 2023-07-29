@@ -14,6 +14,7 @@
 #define CHUNK_SIZE 1024
 #define DOUBLE_CRLF "\r\n\r\n"
 #define DOUBLE_CRLF_LEN 4
+#define BUFFER_RESIZE_RATIO 2
 
 int bind_and_listen(int* sockfd)
 {
@@ -117,7 +118,7 @@ int recieve_data_on_socket(int sockfd, char** buffer, int num_of_http_sep)
         return -1;
       }
       memset(*buffer + buffer_size, 0, buffer_size * sizeof(char));
-      buffer_size *= 2;
+      buffer_size *= BUFFER_RESIZE_RATIO;
     }
 
     bytes_received = recv(sockfd, *buffer + total_bytes_read, buffer_size - total_bytes_read, 0);
