@@ -14,12 +14,9 @@ lb_back_end.o: lb_back_end.c lb_back_end.h
 
 
 
-.PHONY: clean all test
+.PHONY: clean all
 
 clean:
 	@-rm -f *.o ex3_lb
 
 all: ex3_lb
-
-test:
-	/specific/a/home/cc/students/csguests/nimrodav/socket_ex/test.sh
